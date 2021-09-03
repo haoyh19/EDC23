@@ -8,6 +8,7 @@ namespace EDCHOST22
 {
     class Mine      // 此类第一回合、第二回合通用，两个回合分别使用不同的generator生成金矿
     {
+        public const double A = 100;
         public Dot StartDot;       // 金矿初始位置
         public Dot FinalDot;         // 需要运输到的点（停车区域的中心点）
         public int StartDepth;           // 金矿初始深度
@@ -40,7 +41,7 @@ namespace EDCHOST22
         // 获取某金矿对任意点处的强度
         static public double GetIntensity(Mine m, Dot d)
         {
-            return Math.Sqrt(Math.Pow(m.StartDepth, 2) + Math.Pow(m.StartDot.x - d.x, 2) + Math.Pow(m.StartDot.y - d.y, 2));
+            return A/(Math.Pow(m.StartDepth, 2) + Math.Pow(m.StartDot.x - d.x, 2) + Math.Pow(m.StartDot.y - d.y, 2));
         }
     }
 }
