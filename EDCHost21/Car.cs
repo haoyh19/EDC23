@@ -13,7 +13,7 @@ namespace EDCHOST22
     };
     public class Car // 选手的车
     {
-        public const int CARIN_CREDIT = 10;
+        public const int CARIN_CREDIT = 10;         // 车进入中心矿区可以得到10分；
         public const int LOAD1_CREDIT = 20;        // 第一回合，走到金矿处可以得到20分;
         public const int UNLOAD1_CREDIT = 20;     // 第一回合，金矿运送到指定地点可以得到20分;
         public const int LOAD2_CREDIT = 5;       // 第二回合，收集到金矿可以得到5分；
@@ -26,10 +26,10 @@ namespace EDCHOST22
         
 
 
-        public Dot mPos;
-        public Dot mLastPos;
-        public Dot mLastOneSecondPos;
-        public Dot mTransPos;
+        public Dot mPos;                // 当前位置
+        public Dot mLastPos;            // 上一帧的位置
+        public Dot mLastOneSecondPos;      // 上一秒的位置，便于实现1Hz发送
+        public Dot mTransPos;               // 最终发送的位置，10Hz则为mPos，1Hz则为mLastOneSecondPos
         public Camp MyCamp;               // A or B get、set直接两个封装好的函数
         public int MyScore;               // 得分
         public int mMine1Load;             // 小车在第一回合成功收集金矿个数
@@ -43,8 +43,8 @@ namespace EDCHOST22
         public int mIsInField;            // 小车目前在不在场地内 0不在场地内 1在场地内
         public int mCrossBeaconCount;      // 小车触碰信标的次数
         public int mFoulCount;            // 犯规按键次数
-        public int mRightPos;             //小车现在的位置信息是否是正确的，0为不正确的，1为正确的
-        public int mRightPosCount;        //用于记录小车位置是否该正确了
+        public int mRightPos;             // 小车现在的位置信息是否是正确的，0为不正确的，1为正确的
+        public int mRightPosCount;        // 用于记录小车位置是否该正确了（实现1Hz）
         public int WhetherCarIn;          // 记录小车是否进入了迷宫
         public int mBeaconCount;          // 记录小车放置信标数目
 
