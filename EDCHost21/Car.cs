@@ -6,64 +6,73 @@ using System.Threading.Tasks;
 
 namespace EDCHOST22
 {
-    //队名
+    // 队名
     public enum Camp
     {
         NONE = 0, A, B
     };
-    public class Car //选手的车
+    public class Car // 选手的车
     {
-        public const int PKG_CREDIT = 10;        //获取物资可以得到10分;
-        public const int RESCUE_CREDIT = 30;     //营救人员可以得到30分;
-        public const int FLOOD_PENALTY = 5;     //经过泄洪口惩罚15分;
-        public const int OBST_PENALTY = 50;      //经过虚拟障碍物惩罚50分;
-        public const int WRONG_DIR_PENALTY = 10; //逆行惩罚10分;
-        public const int FOUL_PENALTY = 50;      //犯规扣分50分;
+        public const int CARIN_CREDIT = 10;
+        public const int LOAD1_CREDIT = 20;        // 第一回合，走到金矿处可以得到20分;
+        public const int UNLOAD1_CREDIT = 20;     // 第一回合，金矿运送到指定地点可以得到20分;
+        public const int LOAD2_CREDIT = 5;       // 第二回合，收集到金矿可以得到5分；
+        public const int UNLOAD2_CREDIT = 20;     // 第二回合，金矿运送到指定地点可以得到20分；
+        public const int AHEAD_CREDIT_PS = 1;         // 提前完成第一回合任务，每提前1sec加1分；
+        public const int BEACON_CREDIT = 5;      // 放置信标可以得到5分；
+        public const int BEACON_PENALTY = 50;     // 触碰到信标惩罚50分；
+        public const int FOUL_PENALTY = 50;      // 犯规扣分50分；
+
+        
 
 
         public Dot mPos;
         public Dot mLastPos;
         public Dot mLastOneSecondPos;
         public Dot mTransPos;
-        public Camp MyCamp;               //A or B get、set直接两个封装好的函数
-        public int MyScore;               //得分
-        public int mPkgCount;             //小车成功收集物资个数
-        public int mTaskState;            //小车任务 0为上半场任务，1为下半场任务
-        public int mIsWithPassenger;      //小车上是否载人 0未载人 1载人
-        public int mRescueCount;          //小车成功运送人个数
-        public int mIsInMaze;             //小车所在的区域 0在迷宫外 1在迷宫内
-        public int mIsInField;            //小车目前在不在场地内 0不在场地内 1在场地内
-        public int mCrossFloodCount;      //小车经过泄洪口的次数
-        public int mCrossWallCount;       //小车经过虚拟障碍的次数
-        public int mWrongDirCount;        //小车逆行次数
-        public int mFoulCount;            //犯规摁键次数
+        public Camp MyCamp;               // A or B get、set直接两个封装好的函数
+        public int MyScore;               // 得分
+        public int mMine1Load;             // 小车在第一回合成功收集金矿个数
+        public int mMine1Unload;           // 小车在第一回合成功运送金矿个数
+        public int mMine2Load;              // 小车在第二回合成功收集金矿的个数
+        public int mMine2Unload;            // 小车在第二回合成功运送金矿的个数
+        public int mAheadSec;              // 第一回合提前完成的秒数
+        public int mTaskState;            // 小车任务，0为第一回合，1为第二回合
+        public int mMineState;             // 小车上载有金矿的个数
+        public int mIsInMaze;             // 小车所在的区域 0在迷宫外 1在迷宫内
+        public int mIsInField;            // 小车目前在不在场地内 0不在场地内 1在场地内
+        public int mCrossBeaconCount;      // 小车触碰信标的次数
+        public int mFoulCount;            // 犯规按键次数
         public int mRightPos;             //小车现在的位置信息是否是正确的，0为不正确的，1为正确的
         public int mRightPosCount;        //用于记录小车位置是否该正确了
-        public int WhetherCarIn;          //记录小车是否进入了迷宫
-        public int WhetherCarOut;          //记录小车是否会到入口
+        public int WhetherCarIn;          // 记录小车是否进入了迷宫
+        public int mBeaconCount;          // 记录小车放置信标数目
 
 
         public Car(Camp c, int task)
         {
+
             MyCamp = c;
             mPos = new Dot(0, 0);
             mLastPos = new Dot(0, 0);
             mLastOneSecondPos = new Dot(0, 0);
             mTransPos = new Dot(0, 0);
             MyScore = 0;
-            mPkgCount = 0;
+            mMine1Load = 0;
+            mMine1Unload = 0;
+            mMine2Load = 0;
+            mBeaconCount = 0;
+            mMine2Unload = 0;
+            mAheadSec = 0;
             mTaskState = task;
-            mIsWithPassenger = 0;
-            mRescueCount = 0;
+            mMineState = 0;
+            mIsInField = 0;
             mIsInMaze = 0;
-            mCrossFloodCount = 0;
-            mCrossWallCount = 0;
-            mWrongDirCount = 0;
-            mFoulCount = 0; //xhl 0824 添加
+            mCrossBeaconCount = 0;
+            mFoulCount = 0;
             mRightPos = 1;
             mRightPosCount = 0;
             WhetherCarIn = 0;
-            WhetherCarOut = 0;
         }
         public void UpdateLastPos()
         {
@@ -75,30 +84,34 @@ namespace EDCHOST22
             mPos = pos;
         }
 
-        public void AddFloodPunish() //犯规
+        public void AddCrossBeacon() // 触碰信标次数
         {
-            mCrossFloodCount++;
+            mCrossBeaconCount++;
             UpdateScore();
         }
-        public void AddWallPunish()
+        public void AddMineLoad(int round, int cnt = 1)  // 根据回合数(round=0代表回合1，round=1代表回合2），增加收集矿物次数cnt次
         {
-            mCrossWallCount++; //前一个版本疑似typo（xhl）
-            UpdateScore();
-        }
-        public void AddWrongDirection()
-        {
-            mWrongDirCount++;
-            UpdateScore();
-        }
-        public void AddRescueCount()
-        {
-            mRescueCount++;
+            if (round == 0)
+            {
+                mMine1Load += cnt;
+            }
+            else
+            {
+                mMine2Load += cnt;
+            }
             UpdateScore();
         }
 
-        public void AddPickPkgCount()
+        public void AddMineUnload(int round, int cnt = 1)   // 根据回合数(round=0代表回合1，round=1代表回合2），增加运送矿物次数cnt次
         {
-            mPkgCount++;
+            if (round == 0)
+            {
+                mMine1Unload += cnt;
+            }
+            else
+            {
+                mMine2Unload += cnt;
+            }
             UpdateScore();
         }
         public void AddFoulCount()
@@ -106,37 +119,39 @@ namespace EDCHOST22
             mFoulCount++;
             UpdateScore();
         }
-        public void SwitchPassengerState()
+        
+        public void AddBeaconCount(int cnt = 1)         // 放置了cnt = 1个信标
         {
-            if (mIsWithPassenger == 0)
-            {
-                mIsWithPassenger = 1;
-            }
-            else
-            {
-                mIsWithPassenger = 0;
-            }
+            mBeaconCount += mBeaconCount >= 3 ? 0 : cnt;
+            UpdateScore();
         }
-        public void CarGetIn()
+        public void SetAheadSec(int _sec)   // 设置提前完成第一回合任务的秒数
+        {
+            mAheadSec = _sec;
+            UpdateScore();
+        }
+
+        public void SetMineState(int _cnt)  // 设置当前车上有cnt个矿
+        {
+            mMineState = _cnt;
+            UpdateScore();
+        }
+        public void SetCarIn()
         {
             WhetherCarIn = 1;
             UpdateScore();
         }
-        public void CarGetOut()
-        {
-            WhetherCarOut = 1;
-            UpdateScore();
-        }
-        //8-14 yd将Score后的代码折成多行，便于阅读
+
+               
         public void UpdateScore()
         {
-            MyScore = mPkgCount * PKG_CREDIT
-                + mRescueCount * RESCUE_CREDIT
-                - mCrossFloodCount * FLOOD_PENALTY
-                - OBST_PENALTY * mCrossWallCount
-                - mWrongDirCount * WRONG_DIR_PENALTY
-                - mFoulCount * FOUL_PENALTY
-                + WhetherCarIn * 25 + WhetherCarOut * 25;
+            MyScore = mMine1Load * LOAD1_CREDIT + mMine2Load * LOAD2_CREDIT         // 收集到矿的分数
+                + mMine1Unload * UNLOAD1_CREDIT + mMine2Unload * UNLOAD2_CREDIT     // 运送成功的分数
+                - mCrossBeaconCount * BEACON_PENALTY                    // 触碰信标惩罚的分数
+                - mFoulCount * FOUL_PENALTY                             // 犯规扣分
+                + WhetherCarIn * CARIN_CREDIT                           // 车进入中心矿区的分数
+                + mAheadSec * AHEAD_CREDIT_PS                          // 提前完成第一回合任务的分数
+                + mBeaconCount * BEACON_CREDIT;                         // 放置信标的分数
         }
     }
 }
