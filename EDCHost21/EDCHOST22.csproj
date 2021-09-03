@@ -103,6 +103,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Beacon.cs" />
     <Compile Include="Component1.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -111,6 +112,7 @@
     </Compile>
     <Compile Include="CoordinateConverter.cs" />
     <Compile Include="Dot.cs" />
+    <Compile Include="Mine.cs" />
     <Compile Include="MyConvert.cs" />
     <Compile Include="Labyrinth.cs" />
     <Compile Include="Car.cs" />
