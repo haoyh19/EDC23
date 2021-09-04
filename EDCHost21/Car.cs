@@ -14,28 +14,31 @@ namespace EDCHOST22
     public class Car // 选手的车
     {
         public const int CARIN_CREDIT = 10;         // 车进入中心矿区可以得到10分；
-        public const int LOAD1_CREDIT = 20;        // 第一回合，走到金矿处可以得到20分;
-        public const int UNLOAD1_CREDIT = 20;     // 第一回合，金矿运送到指定地点可以得到20分;
-        public const int LOAD2_CREDIT = 5;       // 第二回合，收集到金矿可以得到5分；
-        public const int UNLOAD2_CREDIT = 20;     // 第二回合，金矿运送到指定地点可以得到20分；
+        public const int LOAD1_CREDIT = 20;        // 第一回合，走到一个金矿处可以得到20分;
+        public const int UNLOAD1_CREDIT = 20;     // 第一回合，将所有金矿运送到指定地点可以得到20分;
+        public const int LOAD2_CREDIT = 5;       // 第二回合，收集到一个金矿可以得到5分；
+        public const int UNLOAD2_CREDIT = 20;     // 第二回合，将装满的金矿运送到指定地点可以得到20分；
         public const int AHEAD_CREDIT_PS = 1;         // 提前完成第一回合任务，每提前1sec加1分；
         public const int BEACON_CREDIT = 5;      // 放置信标可以得到5分；
         public const int BEACON_PENALTY = 50;     // 触碰到信标惩罚50分；
         public const int FOUL_PENALTY = 50;      // 犯规扣分50分；
+        public const int BEACON_LIMIT = 3;      // 最多放置3个信标；
+        public const int MINE_LIMIT = 5;        // 最多载5个金矿；
+        public const int PORT_COUNT_LIMIT = 3;  // 小车在第二回合最多成功运送3次（得60分）
 
         
 
 
-        public Dot mPos;                // 当前位置
-        public Dot mLastPos;            // 上一帧的位置
-        public Dot mLastOneSecondPos;      // 上一秒的位置，便于实现1Hz发送
-        public Dot mTransPos;               // 最终发送的位置，10Hz则为mPos，1Hz则为mLastOneSecondPos
+        public Dot mPos;                // 当前位置，即为10Hz发送的位置
+        public Dot mLastPos;            // 上一帧的位置，用于判断碰撞
+        // public Dot mLastOneSecondPos;      // 上一秒的位置，便于实现1Hz发送
+        // public Dot mTransPos;               // 最终发送的位置，10Hz则为mPos，1Hz则为mLastOneSecondPos
         public Camp MyCamp;               // A or B get、set直接两个封装好的函数
         public int MyScore;               // 得分
         public int mMine1Load;             // 小车在第一回合成功收集金矿个数
-        public int mMine1Unload;           // 小车在第一回合成功运送金矿个数
+        public int mMine1Unload;           // 小车在第一回合成功运送金矿的次数
         public int mMine2Load;              // 小车在第二回合成功收集金矿的个数
-        public int mMine2Unload;            // 小车在第二回合成功运送金矿的个数
+        public int mMine2Unload;            // 小车在第二回合成功运送金矿的次数
         public int mAheadSec;              // 第一回合提前完成的秒数
         public int mTaskState;            // 小车任务，0为第一回合，1为第二回合
         public int mMineState;             // 小车上载有金矿的个数
@@ -43,8 +46,8 @@ namespace EDCHOST22
         public int mIsInField;            // 小车目前在不在场地内 0不在场地内 1在场地内
         public int mCrossBeaconCount;      // 小车触碰信标的次数
         public int mFoulCount;            // 犯规按键次数
-        public int mRightPos;             // 小车现在的位置信息是否是正确的，0为不正确的，1为正确的
-        public int mRightPosCount;        // 用于记录小车位置是否该正确了（实现1Hz）
+        //public int mRightPos;             // 小车现在的位置信息是否是正确的，0为不正确的，1为正确的
+        //public int mRightPosCount;        // 用于记录小车位置是否该正确了（实现1Hz）
         public int WhetherCarIn;          // 记录小车是否进入了迷宫
         public int mBeaconCount;          // 记录小车放置信标数目
 
@@ -55,8 +58,6 @@ namespace EDCHOST22
             MyCamp = c;
             mPos = new Dot(0, 0);
             mLastPos = new Dot(0, 0);
-            mLastOneSecondPos = new Dot(0, 0);
-            mTransPos = new Dot(0, 0);
             MyScore = 0;
             mMine1Load = 0;
             mMine1Unload = 0;
@@ -70,16 +71,14 @@ namespace EDCHOST22
             mIsInMaze = 0;
             mCrossBeaconCount = 0;
             mFoulCount = 0;
-            mRightPos = 1;
-            mRightPosCount = 0;
             WhetherCarIn = 0;
         }
-        public void UpdateLastPos()
+        public void UpdateLastPos() // 更新上一帧位置
         {
             mLastPos = mPos;
         }
 
-        public void SetPos(Dot pos)
+        public void SetPos(Dot pos) // 设置当前位置
         {
             mPos = pos;
         }
@@ -89,28 +88,28 @@ namespace EDCHOST22
             mCrossBeaconCount++;
             UpdateScore();
         }
-        public void AddMineLoad(int round, int cnt = 1)  // 根据回合数(round=0代表回合1，round=1代表回合2），增加收集矿物次数cnt次
+        public void AddMineLoad(int round)  // 根据回合数(round=0代表回合1，round=1代表回合2），增加收集矿物次数1次
         {
             if (round == 0)
             {
-                mMine1Load += cnt;
+                mMine1Load ++;
             }
             else
             {
-                mMine2Load += cnt;
+                mMine2Load ++;
             }
             UpdateScore();
         }
 
-        public void AddMineUnload(int round, int cnt = 1)   // 根据回合数(round=0代表回合1，round=1代表回合2），增加运送矿物次数cnt次
+        public void AddMineUnload(int round)   // 根据回合数(round=0代表回合1，round=1代表回合2），增加运送矿物次数1次
         {
             if (round == 0)
             {
-                mMine1Unload += cnt;
+                mMine1Unload += mMine1Unload >= 1 ? 0 : 1;
             }
             else
             {
-                mMine2Unload += cnt;
+                mMine2Unload += mMine2Unload >= PORT_COUNT_LIMIT ? 0 : 1;
             }
             UpdateScore();
         }
@@ -120,9 +119,9 @@ namespace EDCHOST22
             UpdateScore();
         }
         
-        public void AddBeaconCount(int cnt = 1)         // 放置了cnt = 1个信标
+        public void AddBeaconCount()         // 放置了1个信标
         {
-            mBeaconCount += mBeaconCount >= 3 ? 0 : cnt;
+            mBeaconCount += mBeaconCount >= BEACON_LIMIT ? 0 : 1;
             UpdateScore();
         }
         public void SetAheadSec(int _sec)   // 设置提前完成第一回合任务的秒数
@@ -131,17 +130,28 @@ namespace EDCHOST22
             UpdateScore();
         }
 
-        public void SetMineState(int _cnt)  // 设置当前车上有cnt个矿
+        public bool IsMineStateFull()        // 是否满载
         {
-            mMineState = _cnt;
-            UpdateScore();
+            return mMineState >= MINE_LIMIT;
         }
-        public void SetCarIn()
+        public void ClearMineState()  // 清空载矿
+        {
+            mMineState = 0;
+        }
+        public void AddMineState()  // 增加当前载矿数
+        {
+            mMineState += IsMineStateFull() ? 0 : 1;
+        }
+        public void SetCarIn()          // 车进入中心矿区
         {
             WhetherCarIn = 1;
             UpdateScore();
         }
-
+        public void setAheadSec(int sec_)       // 设置第一回合提前完成任务的秒数
+        {
+            mAheadSec = sec_;
+            UpdateScore();
+        }
                
         public void UpdateScore()
         {

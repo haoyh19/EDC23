@@ -111,8 +111,10 @@
       <DependentUpon>Component1.cs</DependentUpon>
     </Compile>
     <Compile Include="CoordinateConverter.cs" />
+    <Compile Include="Court.cs" />
     <Compile Include="Dot.cs" />
     <Compile Include="Mine.cs" />
+    <Compile Include="MineGenerator1.cs" />
     <Compile Include="MyConvert.cs" />
     <Compile Include="Labyrinth.cs" />
     <Compile Include="Car.cs" />
