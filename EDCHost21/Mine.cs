@@ -13,7 +13,7 @@ namespace EDCHOST22
         public static int xUpperBound = 240;
         public static int yLowerBound = 30;
         public static int yUpperBound = 240;
-        public static int hLowerBound = 0;
+        public static int hLowerBound = 10;
         public static int hUpperBound = 200;
 
         public const double A = 100;    // 金矿强度值计算参数
@@ -46,10 +46,10 @@ namespace EDCHOST22
         public void RandomInfo()    
         {
             Random random = new Random();
-            int x = random.Next() % (xUpperBound - xLowerBound - 1) + xLowerBound + 1;
-            int y = random.Next() % (yUpperBound - yLowerBound - 1) + yLowerBound + 1;
+            int x = random.Next(xLowerBound, xUpperBound);
+            int y = random.Next(yLowerBound, yUpperBound);
             this.Pos.SetInfo(x, y);
-            Depth = random.Next() % (hUpperBound - hLowerBound - 1) + hLowerBound + 1;
+            Depth = random.Next(hLowerBound, hUpperBound);
         }
         
         // 获取某金矿对任意点处的强度
