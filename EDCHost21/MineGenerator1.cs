@@ -12,7 +12,7 @@ namespace EDCHOST22
     class MineGenerator1    // 第一回合的金矿，伪随机生成（从文件读取）
     {
         public const int MINENUM = 2;       // 第一回合存在的金矿数
-        public const string FILENAME = "./MineInfo.txt";    // 伪随机金矿位置存储文件名
+        public const string FILENAME = "./MineInfo_1.txt";    // 伪随机金矿位置存储文件名//ytz在这里改了一下文件名
         public const int LINENUM = 8;       // 文件共有几行，即有几种可选地图（金矿分布）
 
         /* MineInfo.txt文件存储格式：
@@ -62,8 +62,8 @@ namespace EDCHOST22
                 int d2 = int.Parse(bits[6]);
                 int c2 = int.Parse(bits[7]);
                 Dot p2 = Court.ParkID2Dot(c2);
-                MineArray[0].ResetInfo(new Dot(x1, y1), p1, d1);
-                MineArray[1].ResetInfo(new Dot(x2, y2), p2, d2);
+                MineArray[0].ResetInfo(new Dot(x1, y1), d1, p1.x, p1.y);
+                MineArray[1].ResetInfo(new Dot(x2, y2), d2, p2.x, p2.y);
 
                 // 金矿成功设置
                 IsMineSet = true;
@@ -84,7 +84,12 @@ namespace EDCHOST22
             }
             LineNow = line;
         }
-
         
+        //Game中直接调用Generate函数，将得到一个做好的MineGenerator对象，从中拿mine的数据即可。Game中，不同车第一回合中用同一个MineGenerator对象
+        public void Generate()
+        {
+            Random ran = new Random();
+            ReadFromFile(ran.Next(1, LINENUM));
+        }
     }
 }
