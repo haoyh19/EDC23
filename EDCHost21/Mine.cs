@@ -36,7 +36,7 @@ namespace EDCHOST22
         }
 
         //用于修改点位的接口
-        public void ResetInfo(Dot start_dt, int depth_, int final_dt_x = 0)
+        public void ResetInfo(Dot start_dt, int depth_)
         {
             Pos = start_dt;
             Depth = depth_;
