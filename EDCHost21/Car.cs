@@ -29,8 +29,9 @@ namespace EDCHOST22
         
 
 
-        public Dot mPos;                // 当前位置，即为10Hz发送的位置
+        public Dot mPos;                // 当前位置
         public Dot mLastPos;            // 上一帧的位置，用于判断碰撞
+        public Dot mTransPos;           // 发送的位置
         // public Dot mLastOneSecondPos;      // 上一秒的位置，便于实现1Hz发送
         // public Dot mTransPos;               // 最终发送的位置，10Hz则为mPos，1Hz则为mLastOneSecondPos
         public Camp MyCamp;               // A or B get、set直接两个封装好的函数
@@ -72,6 +73,7 @@ namespace EDCHOST22
             mCrossBeaconCount = 0;
             mFoulCount = 0;
             WhetherCarIn = 0;
+            mTransPos = new Dot();
         }
         public void UpdateLastPos() // 更新上一帧位置
         {
@@ -145,11 +147,6 @@ namespace EDCHOST22
         public void SetCarIn()          // 车进入中心矿区
         {
             WhetherCarIn = 1;
-            UpdateScore();
-        }
-        public void setAheadSec(int sec_)       // 设置第一回合提前完成任务的秒数
-        {
-            mAheadSec = sec_;
             UpdateScore();
         }
                
