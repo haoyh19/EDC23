@@ -13,7 +13,8 @@ namespace EDCHOST22
         public const int BORDER_CM = 30;   // 周边道路的宽度
         public const int HALF_BORDER_CM = 15;   // 周边道路中心线与道路边缘的距离
         public const int DISTANCE_PARKIN_AREA = 120;    // 停车点中心点间距
-        public const double COINCIDE_ERR_DIST_CM = 10;  // 判定小车到达某点允许的最大误差距离（碰撞半径）
+        public const int COINCIDE_ERR_DIST_CM = 10;  // 判定小车到达某点允许的最大误差距离（碰撞半径）
+        public const int MINE_LOWERDIST_CM = 20;        // 金矿间的最小距离
         public const int TOTAL_PARKING_AREA = 8;     // 停车点的总个数
         /* 停车点编号方式：
          *      0 1 2
