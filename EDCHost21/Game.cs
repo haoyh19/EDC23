@@ -13,10 +13,9 @@ namespace EDCHOST22
     // 比赛状况：未开始、正常进行中、暂停、结束
     public enum GameState { UNSTART = 0, NORMAL = 1, PAUSE = 2, END = 3 };
 
-    // 人员状况：被困、在小车上且还未到指定点、到达目标点
-    public enum PassengerState { TRAPPED, INCAR, RESCUED };
+    // 比赛阶段：第一回合A车，第一回合B车，第二回合A车，第二回合B车，比赛结束
+    public enum GameStage { FIRST_A = 0, FIRST_B, SECOND_A, SECOND_B ,END};
 
-    public enum GameStage { FIRST_1 = 0, FIRST_2, LATTER_1, LATTER_2 ,END};
     public class Game
     {
         public bool DebugMode;                       //调试模式，最大回合数 = 1,000,000
@@ -120,11 +119,6 @@ namespace EDCHOST22
             return time;
         }
 
-        public static double GetDistance(Dot A, Dot B)//得到两个点之间的距离
-        {
-            return Math.Sqrt((A.x - B.x) * (A.x - B.x)
-                + (A.y - B.y) * (A.y - B.y));
-        }
         public void SetFloodArea()
         {
             int i, j;
