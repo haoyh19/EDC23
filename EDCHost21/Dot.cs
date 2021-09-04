@@ -26,5 +26,15 @@ namespace EDCHOST22
             return !(a == b);
         }
 
+        public void SetInfo(int x_, int y_)
+        {
+            this.x = x_;
+            this.y = y_;
+        }
+
+        public static double GetDistance(Dot d1, Dot d2)
+        {
+            return Math.Sqrt(Math.Pow(d1.x - d2.x, 2) + Math.Pow(d1.y - d2.y, 2));
+        }
     }
 }
