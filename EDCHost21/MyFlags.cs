@@ -48,17 +48,10 @@ namespace EDCHOST22
         public OpenCvSharp.Size cameraSize;
         public OpenCvSharp.Size logicSize;
 
-        // 小车是否在场上
-        public bool CarAInField;
-        public bool CarBInField;
-
-        // 在场上的小车是否在迷宫中
-        public bool IsInMaze;
 
 
-
-
-        public void Init()
+        //将Init()替换为默认构造函数
+        public MyFlags()
         {
             showMask = false;
             running = false;

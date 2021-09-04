@@ -98,7 +98,6 @@ namespace EDCHOST22
 
             //flags参数类
             flags = new MyFlags();
-            flags.Init();
             flags.Start();
 
             // 创建视频流
