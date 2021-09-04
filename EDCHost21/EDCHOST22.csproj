@@ -114,8 +114,7 @@
     <Compile Include="Court.cs" />
     <Compile Include="Dot.cs" />
     <Compile Include="Mine.cs" />
-    <Compile Include="MineGenerator2.cs" />
-    <Compile Include="MineGenerator1.cs" />
+    <Compile Include="MineGenerator.cs" />
     <Compile Include="MyConvert.cs" />
     <Compile Include="Labyrinth.cs" />
     <Compile Include="Car.cs" />
