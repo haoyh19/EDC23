@@ -47,7 +47,7 @@ namespace EDCHOST22
         //CarB放置信标
         public void CarBAddBeacon(Dot Pos)
         {
-            if (CarBBeaconNum < 3)
+            if (CarBBeaconNum < MaxBeaconNum)
             {
                 CarBBeacon[CarBBeaconNum] = Pos;
                 CarBBeaconNum++;
@@ -55,14 +55,14 @@ namespace EDCHOST22
         }
         //得到CarA同六个信标的距离，返回6个数字，前三个为自己放置的信标，后三个为另一组放置的信标，
         //如果某一方未放置够3个信标，未放置的信标所返回的距离为-1
-        public double[] GetCarADistance(int Posx, int Posy)
+        public double[] GetCarADistance(Dot Pos)
         {
             double[] Distance = new double[MaxBeaconNum * 2];
             for (int i = 0; i < MaxBeaconNum; i++)
             {
                 if (i < CarABeaconNum)
                 {
-                    Distance[i] = Math.Sqrt((Posx - CarABeacon[i].x) * (Posx - CarABeacon[i].x) + (Posy - CarABeacon[i].y) * (Posy - CarABeacon[i].y));
+                    Distance[i] = Dot.GetDistance(Pos, CarABeacon[i]);
                 }
                 else
                 {
@@ -73,7 +73,7 @@ namespace EDCHOST22
             {
                 if (i < CarBBeaconNum)
                 {
-                    Distance[i + MaxBeaconNum] = Math.Sqrt((Posx - CarBBeacon[i].x) * (Posx - CarBBeacon[i].x) + (Posy - CarBBeacon[i].y) * (Posy - CarBBeacon[i].y));
+                    Distance[i + MaxBeaconNum] = Dot.GetDistance(Pos, CarBBeacon[i]);
                 }
                 else
                 {
@@ -84,14 +84,14 @@ namespace EDCHOST22
         }
         //得到CarB同六个信标的距离，返回6个数字，前三个为自己放置的信标，后三个为另一组放置的信标，
         //如果某一方未放置够3个信标，未放置的信标所返回的距离为-1
-        public double[] GetCarBDistance(int Posx, int Posy)
+        public double[] GetCarBDistance(Dot Pos)
         {
             double[] Distance = new double[MaxBeaconNum * 2];
             for (int i = 0; i < MaxBeaconNum; i++)
             {
                 if (i < CarBBeaconNum)
                 {
-                    Distance[i] = Math.Sqrt((Posx - CarBBeacon[i].x) * (Posx - CarBBeacon[i].x) + (Posy - CarBBeacon[i].y) * (Posy - CarBBeacon[i].y));
+                    Distance[i] = Dot.GetDistance(Pos, CarBBeacon[i]);
                 }
                 else
                 {
@@ -102,7 +102,7 @@ namespace EDCHOST22
             {
                 if (i < CarABeaconNum)
                 {
-                    Distance[i + MaxBeaconNum] = Math.Sqrt((Posx - CarABeacon[i].x) * (Posx - CarABeacon[i].x) + (Posy - CarABeacon[i].y) * (Posy - CarABeacon[i].y));
+                    Distance[i + MaxBeaconNum] = Dot.GetDistance(Pos, CarABeacon[i]);
                 }
                 else
                 {
