@@ -28,6 +28,7 @@ namespace EDCHOST22
             CarABeaconNum = 0;
             CarBBeaconNum = 0;
         }
+
         //重设信标
         public void Reset()
         {
