@@ -18,7 +18,7 @@ namespace EDCHOST22
 
         public const double A = 100;    // 金矿强度值计算参数
         public Dot Pos;       // 金矿初始位置
-        // public Dot FinalDot;         // 需要运输到的点 // hyh认为不需要，只有第一回合随机生成一个停车点，写到MineGenerator里即可
+        public Dot FinalDot;         // 需要运输到的点 
         public int Depth;           // 金矿初始深度
 
         //构造函数（含参）
@@ -26,6 +26,7 @@ namespace EDCHOST22
         {
             Pos = start_dt;
             Depth = depth_;
+            FinalDot = new Dot(0, 0);
         }
 
         // 构造函数（无参）
@@ -34,13 +35,15 @@ namespace EDCHOST22
             Dot temp = new Dot(0, 0);
             Pos = temp;
             Depth = 0;
+            FinalDot = new Dot(0, 0);
         }
 
         //用于修改点位的接口
-        public void ResetInfo(Dot start_dt, int depth_)
+        public void ResetInfo(Dot start_dt, int depth_, int final_dt_x = 0, int final_dt_y = 0)
         {
             Pos = start_dt;
             Depth = depth_;
+            FinalDot = new Dot(final_dt_x, final_dt_y);
         }
 
         // 随机金矿的位置信息
