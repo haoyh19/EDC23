@@ -15,13 +15,13 @@ namespace EDCHOST22
         public const int MINELISTNUM = 20;      //第二回合可取用的金矿总数
 
         public Mine[] MineArray1;        // 第一回合设置金矿的数组
-        public int ParkPoint;            //第一回合停车点
+        public int ParkPoint;            // 第一回合停车点
         public Mine[] MineArray2;        // 第二回合金矿数组
-        public int Mine_id;              //第二回合金矿取到哪里了
+        public int Mine_id;              // 第二回合该取下标为Mine_id的金矿了
 
         public MineGenerator()         // 构造函数
         {
-            Mine_id = 0;
+            Mine_id = 2;
 
             MineArray1 = new Mine[COURTMINENUM];
             for (int i = 0; i < COURTMINENUM; i++)
@@ -110,7 +110,7 @@ namespace EDCHOST22
                 int stage2_mine_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
                 int stage2_mine_d = ran.Next(Court.MAX_MINE_DEPTH);
                 Dot stage2_mine_xy = new Dot(stage2_mine_x, stage2_mine_y);
-                while (!MinesApart(stage2_mine_xy, i) || Dot.InCollisionZones(stage2_mine_xy, beacon_loc, Court.MINE_LOWERDIST_CM))
+                while (!MinesApart(stage2_mine_xy, i) || Dot.InCollisionZones(stage2_mine_xy, beacon_loc))
                 {
                     stage2_mine_x = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
                     stage2_mine_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
@@ -124,13 +124,18 @@ namespace EDCHOST22
         //第二回合中，返回下一个列表中的金矿
         public Mine GetNextMine()
         {
+            if (Mine_id == MINELISTNUM - 1)     // 重复利用www
+            {
+                Mine_id = 0;
+                return MineArray2[MINELISTNUM];
+            }
             return MineArray2[Mine_id++];
         }
 
         //恢复mine_id为0供B车使用
         public void Reset()
         {
-            Mine_id = 0;
+            Mine_id = 2;
         }
     }
 }
