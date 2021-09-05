@@ -9,10 +9,10 @@ using System.Threading.Tasks;
 
 namespace EDCHOST22
 {
-    class MineGenerator    //进行各回合金矿的生成
+    public class MineGenerator    //进行各回合金矿的生成
     {
         public const int COURTMINENUM = 2;       // 同时存在的金矿数
-        public const int MINELISTNUM = 20;      //第二回合可取用的金矿总数
+        public const int MINELISTNUM = 30;      //第二回合可取用的金矿总数
 
         public Mine[] MineArray1;        // 第一回合设置金矿的数组
         public int ParkPoint;            // 第一回合停车点
@@ -21,7 +21,7 @@ namespace EDCHOST22
 
         public MineGenerator()         // 构造函数
         {
-            Mine_id = 2;
+            Mine_id = 0;
 
             MineArray1 = new Mine[COURTMINENUM];
             for (int i = 0; i < COURTMINENUM; i++)
@@ -124,18 +124,13 @@ namespace EDCHOST22
         //第二回合中，返回下一个列表中的金矿
         public Mine GetNextMine()
         {
-            if (Mine_id == MINELISTNUM - 1)     // 重复利用www
-            {
-                Mine_id = 0;
-                return MineArray2[MINELISTNUM];
-            }
             return MineArray2[Mine_id++];
         }
 
         //恢复mine_id为0供B车使用
         public void Reset()
         {
-            Mine_id = 2;
+            Mine_id = 0;
         }
     }
 }

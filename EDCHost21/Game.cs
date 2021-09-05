@@ -24,38 +24,42 @@ namespace EDCHOST22
         public GameState mGameState;     // 比赛状态
         public GameStage mGameStage;     // 比赛阶段
         public Camp UpperCamp;          // 当前回合需先上场的一方
-        public int mMineState;          // 场上有金矿的数目
         public Car CarA, CarB;          // 定义小车
         public Beacon mBeacon;          // 信标
-        public int mPrevTime;           // 时间均改为以毫秒为单位,记录上一次的时间，精确到秒，实时更新
+        public int mPrevTime;           // 时间均改为以毫秒为单位,记录上一次的时间，精确到毫秒，实时更新
         public int mGameTime;           // 时间均改为以毫秒为单位
-        public FileStream FoulTimeFS;
-        public int mLastOnBeaconTime;
-        public Beacon mLastBeacon;
-
-        // 矿相关的变量
-        // TODO
+        public FileStream FoulTimeFS;   // 犯规记录
+        public int mLastOnBeaconTime;   // 上一次触碰信标的时间，防止多次重复判断撞信标
+        public MineGenerator mMineGenerator;    // 用于生成金矿序列
+        public Dot mParkPoint;            // 第一回合的随机停车点
+        public Mine[] mMineArray;        // 当前在场上的矿的数组
+        public int[] mMineInMaze;          // 两矿是否在场上（1在场上，0已被收集运走）
+        public int mIsOverTime;             
 
 
         // 构造一个新的Game类，默认为CampA是先上半场上一阶段进行
-        // TODO
         public Game()
         {
             Debug.WriteLine("开始执行Game构造函数");
             mGameState = GameState.UNSTART;
             mGameStage = GameStage.FIRST_A;
             UpperCamp = Camp.A;
-            mMineState = 0;
             CarA = new Car(Camp.A, 0);
             CarB = new Car(Camp.B, 0);
             mBeacon = new Beacon();
             mPrevTime = GetCurrentTime();
             mGameTime = 0;
             mLastOnBeaconTime = -10;
-            mLastBeacon = new Beacon();
             Debug.WriteLine("Game构造函数FIRST_A执行完毕");
-
-            // 矿相关变量的初始化
+            mMineGenerator = new MineGenerator();
+            mParkPoint = Court.ParkID2Dot(mMineGenerator.GetParkPoint());
+            mMineArray = mMineGenerator.GetStage1Mine();
+            mMineInMaze = new int[2];
+            mIsOverTime = 0;
+            for (int i = 0; i < mMineInMaze.Length; i++)
+            {
+                mMineInMaze[i] = 1;
+            }
         }
 
         #region 辅助函数
@@ -259,7 +263,8 @@ namespace EDCHOST22
             {
                 Dot[] beaconArray = GetBeacon(2);
                 if (Dot.InCollisionZones(CarA.mPos, beaconArray) && 
-                    (!Dot.InCollisionZones(CarA.mLastPos, beaconArray)))
+                    (!Dot.InCollisionZones(CarA.mLastPos, beaconArray)) &&
+                    mGameTime - mLastOnBeaconTime >= 1000)
                 {
                     CarA.AddCrossBeacon();
                     Debug.WriteLine("A车撞到了B放置的信标，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
@@ -273,12 +278,369 @@ namespace EDCHOST22
             {
                 Dot[] beaconArray = GetBeacon(1);
                 if (Dot.InCollisionZones(CarB.mPos, beaconArray) &&
-                    (!Dot.InCollisionZones(CarB.mLastPos, beaconArray)))
+                    (!Dot.InCollisionZones(CarB.mLastPos, beaconArray)) &&
+                    mGameTime - mLastOnBeaconTime >= 1000)
                 {
                     CarB.AddCrossBeacon();
                     Debug.WriteLine("B车撞到了A放置的信标，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
                     mLastOnBeaconTime = mGameTime;
                 }
+            }
+        }
+
+        // 更新车收集到了金矿
+        public void CheckCarAGetMine()
+        {
+            if (mGameState == GameState.NORMAL)
+            {
+                if (mGameStage == GameStage.FIRST_A)
+                {
+                    if (CarA.IsMineStateFull())
+                    {
+                        return;
+                    }
+                    int flag = -1;
+                    for (int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        if (Dot.InCollisionZone(CarA.mPos, mMineArray[i].Pos))
+                        {
+                            flag = i;
+                            break;
+                        }
+                    }
+                    if (flag != -1)
+                    {
+                        mMineInMaze[flag] = 0;
+                        CarA.AddMineLoad(0);
+                        CarA.AddMineState();
+                    }
+                }
+                else if (mGameStage == GameStage.SECOND_A)
+                {
+                    if (CarA.IsMineStateFull())
+                    {
+                        return;
+                    }
+                    int flag = -1;
+                    for (int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        if (Dot.InCollisionZone(CarA.mPos, mMineArray[i].Pos))
+                        {
+                            flag = i;
+                            break;
+                        }
+                    }
+                    if (flag != -1)
+                    {
+                        mMineInMaze[flag] = 0;
+                        CarA.AddMineLoad(0);
+                        CarA.AddMineState();
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+        }
+        public void CheckCarBGetMine()
+        {
+            if (mGameState == GameState.NORMAL)
+            {
+                if (mGameStage == GameStage.FIRST_B)
+                {
+                    if (CarB.IsMineStateFull())
+                    {
+                        return;
+                    }
+                    int flag = -1;
+                    for (int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        if (Dot.InCollisionZone(CarB.mPos, mMineArray[i].Pos))
+                        {
+                            flag = i;
+                            break;
+                        }
+                    }
+                    if (flag != -1)
+                    {
+                        mMineInMaze[flag] = 0;
+                        CarB.AddMineLoad(0);
+                        CarB.AddMineState();
+                    }
+                }
+                else if (mGameStage == GameStage.SECOND_B)
+                {
+                    if (CarB.IsMineStateFull())
+                    {
+                        return;
+                    }
+                    int flag = -1;
+                    for (int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        if (Dot.InCollisionZone(CarB.mPos, mMineArray[i].Pos))
+                        {
+                            flag = i;
+                            break;
+                        }
+                    }
+                    if (flag != -1)
+                    {
+                        mMineInMaze[flag] = 0;
+                        CarB.AddMineLoad(0);
+                        CarB.AddMineState();
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+        }
+
+        // 更新车是否完成矿的运送
+        public void CheckCarAUnloadMine()
+        {
+            if (mGameState == GameState.NORMAL)
+            {
+                if (mGameStage == GameStage.FIRST_A)
+                {
+                    if (CarA.mMineState == MINE_COUNT_MAX &&
+                        Dot.InCollisionZone(CarA.mPos, mParkPoint))
+                    {
+                        CarA.AddMineUnload(0);
+                        CarA.ClearMineState();
+                        if (mGameTime < 60000)
+                        {
+                            CarA.SetAheadSec((60000 - mGameTime) / 1000);
+                        }
+                    }
+                }
+                else if (mGameStage == GameStage.SECOND_A)
+                {
+                    Dot[] beaconList = new Dot[mBeacon.CarABeaconNum];
+                    for (int i = 0; i < mBeacon.CarABeaconNum; i++)
+                    {
+                        beaconList[i] = mBeacon.CarABeacon[i];
+                    }
+                    if (CarA.IsMineStateFull() &&
+                        Dot.InCollisionZones(CarA.mPos, beaconList))
+                    {
+                        CarA.AddMineUnload(1);
+                        CarA.ClearMineState();
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+        }
+        public void CheckCarBUnloadMine()
+        {
+            if (mGameState == GameState.NORMAL)
+            {
+                if (mGameStage == GameStage.FIRST_B)
+                {
+                    if (CarB.mMineState == MINE_COUNT_MAX &&
+                        Dot.InCollisionZone(CarB.mPos, mParkPoint))
+                    {
+                        CarB.AddMineUnload(0);
+                        CarB.ClearMineState();
+                        if (mGameTime < 60000)
+                        {
+                            CarB.SetAheadSec((60000 - mGameTime) / 1000);
+                        }
+                    }
+                }
+                else if (mGameStage == GameStage.SECOND_B)
+                {
+                    Dot[] beaconList = new Dot[mBeacon.CarBBeaconNum];
+                    for (int i = 0; i < mBeacon.CarBBeaconNum; i++)
+                    {
+                        beaconList[i] = mBeacon.CarBBeacon[i];
+                    }
+                    if (CarB.IsMineStateFull() &&
+                        Dot.InCollisionZones(CarB.mPos, beaconList))
+                    {
+                        CarB.AddMineUnload(1);
+                        CarB.ClearMineState();
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+        }
+
+        // 更新矿的分布
+        public void UpdateMine()
+        {
+            if (mGameStage == GameStage.FIRST_A ||
+                mGameStage == GameStage.FIRST_B ||
+                mGameStage == GameStage.END ||
+                mGameState != GameState.NORMAL)
+            {
+                return;
+            }
+            Debug.WriteLine("开始执行UpdateMine");
+            for (int  i = 0; i < MINE_COUNT_MAX; i++)
+            {
+                if (mMineInMaze[i] == 0)
+                {
+                    mMineInMaze[i] = 1;
+                    mMineArray[i] = mMineGenerator.GetNextMine();
+                    Debug.WriteLine($"更新矿物位置x = {0}, y = {1}", mMineArray[i].Pos.x, mMineArray[i].Pos.y);
+                }
+            }
+            Debug.WriteLine("执行完毕UpdateMine");
+        }
+
+        // 转换到下一阶段
+        public void CheckNextStage()
+        {
+            if (mGameStage == GameStage.FIRST_A)
+            {
+                int flag = 0;
+                for (int i = 0; i < MINE_COUNT_MAX; i++)
+                {
+                    flag += mMineInMaze[i];
+                }
+                if (mGameTime > 60000 || flag == 0)
+                {
+                    mGameState = GameState.UNSTART;
+                    mGameStage++;
+                    for(int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        mMineInMaze[i] = 1;
+                    }
+                    UpperCamp = Camp.B;
+                    CarA.mTaskState = 1;
+                    if (FoulTimeFS != null)
+                    {
+                        byte[] data = Encoding.Default.GetBytes($"nextStage\r\n");
+                        FoulTimeFS.Write(data, 0, data.Length);
+                        // 如果不加以下两行的话，数据无法写到文件中
+                        FoulTimeFS.Flush();
+                        //FoulTimeFS.Close();
+                    }
+                    Debug.WriteLine("成功进入下一个stage");
+                }
+            }
+            else if (mGameStage == GameStage.FIRST_B)
+            {
+                int flag = 0;
+                for (int i = 0; i < MINE_COUNT_MAX; i++)
+                {
+                    flag += mMineInMaze[i];
+                }
+                if (mGameTime > 60000 || flag == 0)
+                {
+                    mGameState = GameState.UNSTART;
+                    mMineGenerator.GenerateStage2(mBeacon);
+                    for (int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        mMineInMaze[i] = 1;
+                        mMineArray[i] = mMineGenerator.GetNextMine();
+                    }
+                    mGameStage++;
+                    CarB.mTaskState = 1;
+                    if (FoulTimeFS != null)
+                    {
+                        byte[] data = Encoding.Default.GetBytes($"nextStage\r\n");
+                        FoulTimeFS.Write(data, 0, data.Length);
+                        // 如果不加以下两行的话，数据无法写到文件中
+                        FoulTimeFS.Flush();
+                        //FoulTimeFS.Close();
+                    }
+                    Debug.WriteLine("成功进入下一个stage");
+                }
+            }
+            else if (mGameStage == GameStage.SECOND_B)
+            {
+                if (mGameTime > 120000 / (1 + mIsOverTime))
+                {
+                    mGameState = GameState.UNSTART;
+                    mMineGenerator.Reset();
+                    for (int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        mMineInMaze[i] = 1;
+                        mMineArray[i] = mMineGenerator.GetNextMine();
+                    }
+                    mLastOnBeaconTime = -10;
+                    UpperCamp = Camp.A;
+                    mGameStage++;
+                    if (FoulTimeFS != null)
+                    {
+                        byte[] data = Encoding.Default.GetBytes($"nextStage\r\n");
+                        FoulTimeFS.Write(data, 0, data.Length);
+                        // 如果不加以下两行的话，数据无法写到文件中
+                        FoulTimeFS.Flush();
+                        //FoulTimeFS.Close();
+                    }
+                    Debug.WriteLine("成功进入下一个stage");
+                }
+            }
+            else if (mGameStage == GameStage.SECOND_A)
+            {
+                if (mGameTime > 120000 / (1 + mIsOverTime))
+                {
+                    mGameState = GameState.END;
+                    mMineGenerator.Reset();
+                    for (int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        mMineInMaze[i] = 1;
+                        mMineArray[i] = mMineGenerator.GetNextMine();
+                    }
+                    mLastOnBeaconTime = -10;
+                    mGameStage++;
+                    if (FoulTimeFS != null)
+                    {
+                        byte[] data = Encoding.Default.GetBytes($"end\r\n");
+                        FoulTimeFS.Write(data, 0, data.Length);
+                        // 如果不加以下两行的话，数据无法写到文件中
+                        FoulTimeFS.Flush();
+                        //FoulTimeFS.Close();
+                    }
+                    Debug.WriteLine("比赛结束");
+                }
+            }
+            else
+            {
+                return;
+            }
+        }
+
+
+
+        // Game的更新
+        public void Update()
+        {
+            if (mGameState == GameState.NORMAL)
+            {
+                UpdateGameTime();
+                UpdateMine();
+                if (mGameStage == GameStage.FIRST_A || mGameStage == GameStage.SECOND_A)
+                {
+                    JudgeAIsInField();
+                    JudgeAIsInMaze();
+                    CheckCarAGetMine();
+                    CheckCarAOnBeacon();
+                    CheckCarAUnloadMine();
+                    UpdateCarATransPos();
+                }
+                else if (mGameStage == GameStage.FIRST_B || mGameStage == GameStage.SECOND_B)
+                {
+                    JudgeBIsInField();
+                    JudgeBIsInMaze();
+                    CheckCarBGetMine();
+                    CheckCarBOnBeacon();
+                    CheckCarBUnloadMine();
+                    UpdateCarBTransPos();
+                }
+                CheckNextStage();
+
             }
         }
 
@@ -288,6 +650,7 @@ namespace EDCHOST22
         #region 按键触发
 
         // 开始按键
+        // 开始任意一个stage的比赛
         public void Start()
         {
             if (mGameState == GameState.UNSTART)
@@ -349,279 +712,66 @@ namespace EDCHOST22
         }
 
         // 重置按键，初始化比赛
-        // TODO
+        // 仅在比赛暂停(GameState.PAUSE)或未开始(GameState.UNSTART)或结束(GameState.END)时可以初始化比赛
         public void Reset()
         {
+            if (mGameState == GameState.NORMAL)
+            {
+                return;
+            }
             Debug.WriteLine("初始化比赛");
             mGameState = GameState.UNSTART;
             mGameStage = GameStage.FIRST_A;
             UpperCamp = Camp.A;
-            mMineState = 0;
             CarA = new Car(Camp.A, 0);
             CarB = new Car(Camp.B, 0);
             mBeacon = new Beacon();
             mPrevTime = GetCurrentTime();
             mGameTime = 0;
             mLastOnBeaconTime = -10;
-            mLastBeacon = new Beacon();
+            mMineGenerator = new MineGenerator();
+            mParkPoint = Court.ParkID2Dot(mMineGenerator.GetParkPoint());
+            mMineArray = mMineGenerator.GetStage1Mine();
+            mMineInMaze = new int[2];
+            mIsOverTime = 0;
+            for (int i = 0; i < mMineInMaze.Length; i++)
+            {
+                mMineInMaze[i] = 1;
+            }
             Debug.WriteLine("Game构造函数FIRST_A执行完毕");
+        }
 
-            // 矿相关构造函数
+        // 进行加时赛
+        // 仅比赛结束(GameState.END)时可以使用
+        public void OverTime()
+        {
+            if (mGameState != GameState.END)
+            {
+                return;
+            }
+            mIsOverTime = 1;
+            mGameStage = GameStage.SECOND_B;
+            mGameState = GameState.UNSTART;
+            mMineGenerator.GenerateStage2(mBeacon);
+            mMineGenerator.Reset();
+            for (int i = 0; i < MINE_COUNT_MAX; i++)
+            {
+                mMineInMaze[i] = 1;
+                mMineArray[i] = mMineGenerator.GetNextMine();
+            }
+            UpperCamp = Camp.B;
+            mPrevTime = GetCurrentTime();
+            mGameTime = 0;
+            mLastOnBeaconTime = -10;
         }
 
         #endregion
 
 
+        #region 通信（未修改）
 
 
-
-        ////////////////////////////////////// 下面的是去年代码
-
-
-        //每到半点自动更新Package信息函数,8.29已更新
-        public void UpdatePackage()//更换Package函数,每次都更新，而只在半分钟的时候起作用
-        {
-            if (gameStage == GameStage.FIRST_1
-                || gameStage == GameStage.LATTER_1)
-            {
-                return;
-            }
-            int changenum = mGameTime / 30000 + 1;
-            if ((gameStage == GameStage.FIRST_2
-                || gameStage == GameStage.LATTER_2)
-                && mPackageGroupCount < changenum)
-            {
-                for (int i = 0; i < PKG_NUM_perGROUP; i++)
-                {
-
-                    currentPkgList[i]
-                        = pkgGenerator.
-                        GetPackage(i + PKG_NUM_perGROUP * mPackageGroupCount);
-                }
-                mPackageGroupCount++;
-                Debug.WriteLine("UpdatePackage被触发，并执行完毕");
-                Debug.WriteLine("第一个物资位置x{0},y{1}", currentPkgList[0].mPos.x, currentPkgList[0].mPos.y);
-                Debug.WriteLine("第二个物资位置x{0},y{1}", currentPkgList[1].mPos.x, currentPkgList[1].mPos.y);
-                Debug.WriteLine("第三个物资位置x{0},y{1}", currentPkgList[2].mPos.x, currentPkgList[2].mPos.y);
-                Debug.WriteLine("第四个物资位置x{0},y{1}", currentPkgList[3].mPos.x, currentPkgList[3].mPos.y);
-                Debug.WriteLine("第五个物资位置x{0},y{1}", currentPkgList[4].mPos.x, currentPkgList[4].mPos.y);
-                Debug.WriteLine("第六个物资位置x{0},y{1}", currentPkgList[5].mPos.x, currentPkgList[5].mPos.y);
-            }
-
-        }
-
-
-        //下面为更新乘客信息函数
-        public void UpdatePassenger()//更新乘客信息
-        {
-            Debug.WriteLine("开始执行 Update Passenger");
-            curPsg = psgGenerator.Next();
-            Debug.WriteLine("乘客位置x{0},y{1}",curPsg.Start_Dot.x, curPsg.Start_Dot.y);
-            Debug.WriteLine("乘客位置x{0},y{1}", curPsg.End_Dot.x, curPsg.End_Dot.y);
-            Debug.WriteLine("Next Passenger 成功更新");
-        }
-
-        public void CheckNextStage()//从上半场更换到下半场函数
-        {
-            //判断是否结束
-            if (gameStage == GameStage.FIRST_1
-                || gameStage == GameStage.LATTER_1)
-            {
-                if (mGameTime >= 60000)
-                {
-                    gameState = GameState.UNSTART;
-                    gameStage++;
-                    Debug.WriteLine("成功进入下一个stage");
-                    UpdatePassenger();
-                    mLastOnObstacleTime = -10;
-                }
-            }
-            else
-            {
-                if (mGameTime >= 120000)
-                {
-                    gameState = GameState.UNSTART;
-                    if (gameStage == GameStage.FIRST_2)
-                    {
-                        Debug.WriteLine("开始执行上下半场转换");
-                        UpperCamp = Camp.B;//上半场转换
-                        psgGenerator.ResetIndex();//Passenger的索引复位
-                        mPackageGroupCount = 0;
-                        mLastOnFloodTime = -10;
-                        mLastOnObstacleTime = -10;
-                        if (FoulTimeFS != null)                                           
-                        {
-                            byte[] data = Encoding.Default.GetBytes($"nextStage\r\n");
-                            FoulTimeFS.Write(data, 0, data.Length);
-                            // 如果不加以下两行的话，数据无法写到文件中
-                            FoulTimeFS.Flush();
-                            //FoulTimeFS.Close();
-                        }
-                        CarA.mTaskState = 1;//交换A和B的任务
-                        CarB.mTaskState = 0;
-                        gameStage++;
-                        Debug.WriteLine("上下半场转换成功");
-                        if(mLastFlood.num==1)
-                        {
-                            mLastFlood.dot1 = mFlood.dot1;
-                        }
-
-                    }
-                }
-            }
-           
-        }
-
-        //下面四个为接口
-        public void CheckCarAGetPassenger()//小车A接到了乘客
-        {
-            if (gameStage != GameStage.LATTER_2)
-            {
-                return;
-            }
-            if (GetDistance(CarA.mPos, curPsg.Start_Dot)
-                <= COINCIDE_ERR_DIST_CM
-                && CarA.mIsWithPassenger == 0)
-            {
-                Debug.WriteLine("A车接到了乘客，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                CarA.SwitchPassengerState();
-            }
-
-        }
-        public void CheckCarBGetPassenger()//小车B接到了乘客
-        {
-            if (gameStage != GameStage.FIRST_2)
-            {
-                return;
-            }
-            if (GetDistance(CarB.mPos, curPsg.Start_Dot)
-                <= COINCIDE_ERR_DIST_CM
-                && CarB.mIsWithPassenger == 0)
-            {
-                Debug.WriteLine("B车接到了乘客，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                CarB.SwitchPassengerState();
-            }
-        }
-        public void CheckCarATransPassenger()//小车A成功运送了乘客
-        {
-            if (gameStage != GameStage.LATTER_2)
-            {
-                return;
-            }
-
-            if (GetDistance(CarA.mPos, curPsg.End_Dot)
-                <= COINCIDE_ERR_DIST_CM
-                && CarA.mIsWithPassenger == 1)
-            {
-                CarA.SwitchPassengerState();
-                CarA.AddRescueCount();
-                Debug.WriteLine("A车送达了乘客，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                UpdatePassenger();
-            }
-            
-        }
-        public void CheckCarBTransPassenger()//小车B成功运送了乘客
-        {
-            if (gameStage != GameStage.FIRST_2)
-            {
-                return;
-            }
-            if (GetDistance(CarB.mPos, curPsg.End_Dot)
-                <= COINCIDE_ERR_DIST_CM
-                && CarB.mIsWithPassenger == 1)
-            {
-                CarB.SwitchPassengerState();
-                CarB.AddRescueCount();
-                Debug.WriteLine("B车送达了乘客，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                UpdatePassenger();
-            }
-            
-        }
-
-        //下面是两个关于包裹的接口
-        public void CheckCarAGetpackage()//小车A得到了包裹
-        {
-            if (gameStage != GameStage.LATTER_2)
-            {
-                return;
-            }
-            for (int i = 0; i < PKG_NUM_perGROUP; i++)
-            {
-                if (GetDistance(CarA.mPos, currentPkgList[i].mPos)
-                    <= COINCIDE_ERR_DIST_CM
-                    && currentPkgList[i].IsPicked == 0)
-                {
-                    CarA.AddPickPkgCount();
-                    currentPkgList[i].IsPicked = 1;
-                    Debug.WriteLine("A车接到了包裹，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                }
-            }
-
-        }
-        public void CheckCarBGetpackage()//小车B得到了包裹
-        {
-            if (gameStage != GameStage.FIRST_2)
-            {
-                return;
-            }
-            for (int i = 0; i < PKG_NUM_perGROUP; i++)
-            {
-                if (GetDistance(CarB.mPos, currentPkgList[i].mPos)
-                    <= COINCIDE_ERR_DIST_CM
-                    && currentPkgList[i].IsPicked == 0)
-                {
-                    CarB.AddPickPkgCount();
-                    currentPkgList[i].IsPicked = 1;
-                    Debug.WriteLine("B车接到了包裹，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                }
-
-            }
-        }
-
-        
-        public void Update()
-        {
-            if (gameState == GameState.NORMAL)
-            {
-                UpdateGameTime();
-                UpdatePackage();
-                if (gameStage == GameStage.FIRST_1 || gameStage == GameStage.LATTER_2)
-                {
-                    JudgeAIsInMaze();
-                    CheckCarAGetpackage();
-                    CheckCarAGetPassenger();
-                    CheckCarAonFlood();
-                    CheckCarAonObstacle();
-                    CheckCarATransPassenger();
-                    //CheckCarAWrongDirection();
-                    Debug.WriteLine("0.1 Update！");
-                }
-                else
-                {
-                    JudgeBIsInMaze();
-                    CheckCarBGetpackage();
-                    CheckCarBGetPassenger();
-                    CheckCarBonFlood();
-                    CheckCarBonObstacle();
-                    CheckCarBTransPassenger();
-                    //CheckCarBWrongDirection();
-                    Debug.WriteLine("0.1 Update！");
-                }
-                CheckNextStage();
-                UpdateCarATransmPos();
-                UpdateCarBTransmPos();
-                Debug.WriteLine("小车位置x{0},y{1}", CarB.mPos.x, CarB.mPos.y);
-                Debug.WriteLine("物资1 x{0} y{1}", currentPkgList[0].mPos.x, currentPkgList[0].mPos.y);
-                Debug.WriteLine("物资2 x{0} y{1}", currentPkgList[1].mPos.x, currentPkgList[1].mPos.y);
-                Debug.WriteLine("物资3 x{0} y{1}", currentPkgList[2].mPos.x, currentPkgList[2].mPos.y);
-                Debug.WriteLine("物资4 x{0} y{1}", currentPkgList[3].mPos.x, currentPkgList[3].mPos.y);
-                Debug.WriteLine("物资5 x{0} y{1}", currentPkgList[4].mPos.x, currentPkgList[4].mPos.y);
-                Debug.WriteLine("物资6 x{0} y{1}", currentPkgList[5].mPos.x, currentPkgList[5].mPos.y);
-                Debug.WriteLine("泄洪口数{0}", mFlood.num) ;
-            }
-        }
-
-
+        // 未修改
         public byte[] PackCarAMessage()//已更新到最新通信协议
         {
             byte[] message = new byte[70]; //上位机传递多少信息
@@ -782,5 +932,7 @@ namespace EDCHOST22
             message[messageCnt++] = 0x0A;
             return message;
         }
+
+        #endregion
     }
 }

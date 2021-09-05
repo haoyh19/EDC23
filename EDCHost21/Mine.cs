@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace EDCHOST22
 {
-    class Mine      // 此类第一回合、第二回合通用，两个回合中用同一个MineGenerator生成矿
+    public class Mine      // 此类第一回合、第二回合通用，两个回合中用同一个MineGenerator生成矿
     {
         
         public const double A = 100;    // 金矿强度值计算参数
