@@ -16,7 +16,11 @@ namespace EDCHOST22
         public const int COINCIDE_ERR_DIST_CM = 10;  // 判定小车到达某点允许的最大误差距离（碰撞半径）
         public const int MINE_LOWERDIST_CM = 20;        // 金矿间的最小距离
         public const int TOTAL_PARKING_AREA = 8;     // 停车点的总个数
+<<<<<<< HEAD
         public const int MAX_MINE_DEPTH = 50;       //金矿的最深深度
+=======
+        public const int MAX_MINE_DEPTH = 200;  // 矿的最大深度
+>>>>>>> 11f15e213afd16e4479a4fb5891e2ded7f34da1c
         /* 停车点编号方式：
          *      0 1 2
          *      7   3

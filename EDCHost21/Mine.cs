@@ -8,7 +8,7 @@ namespace EDCHOST22
 {
     public class Mine      // 此类第一回合、第二回合通用，两个回合中用同一个MineGenerator生成矿
     {
-
+        
         public const double A = 100;    // 金矿强度值计算参数
         public Dot Pos;       // 金矿初始位置
         public int Depth;           // 金矿初始深度
@@ -35,7 +35,7 @@ namespace EDCHOST22
             Depth = depth_;
         }
 
-
+        
         // 获取某金矿对任意点处的强度
         static public double GetIntensity(Mine m, Dot d)
         {

@@ -10,106 +10,61 @@ using System.Diagnostics;
 
 namespace EDCHOST22
 {
-    // 比赛状况：未开始、正常进行中、暂停、结束
+    // 比赛状态：未开始、正常进行中、暂停、结束
     public enum GameState { UNSTART = 0, NORMAL = 1, PAUSE = 2, END = 3 };
 
     // 比赛阶段：第一回合A车，第一回合B车，第二回合A车，第二回合B车，比赛结束
-    public enum GameStage { FIRST_A = 0, FIRST_B, SECOND_A, SECOND_B ,END};
+    public enum GameStage { FIRST_A = 0, FIRST_B, SECOND_B, SECOND_A ,END};
 
     public class Game
     {
-        public bool DebugMode;                       //调试模式，最大回合数 = 1,000,000
-        public const int MAX_SIZE_CM = 254;          //地图大小
-        public const int MAZE_CROSS_NUM = 6;         //迷宫由几条线交叉而成
-        public const int MAZE_CROSS_DIST_CM = 30;    //间隔的长度
-        public const int MAZE_SHORT_BORDER_CM = 32;  //迷宫最短的靠边距离
-        public const int MAZE_LONG_BORDER_CM = MAZE_SHORT_BORDER_CM
-                                             + MAZE_CROSS_DIST_CM * (MAZE_CROSS_NUM - 1)
-                                             + MAZE_SIDE_BORDER_CM * 2;//迷宫最长的靠边距离
-        public const int MAZE_SIDE_BORDER_CM = 20;         
-        public const double COINCIDE_ERR_DIST_CM = 10;  //判定小车到达某点允许的最大误差距离
-        public const int PKG_NUM_perGROUP = 6;       //场上每次刷新package物资的个数
-        public GameStage gameStage;//比赛阶段
-        public Camp UpperCamp; //当前半场需完成“上半场”任务的一方
-        public GameState gameState;//比赛状态        
-        public PassengerState psgState; // 目前场上被困人员的状况（同一时间场上最多1个被困人员）
-        public Car CarA, CarB;//定义小车
-        public Passenger curPsg;//当前被运载的乘客
-        public Package[] currentPkgList;//当前场上的物资列表
-        public PassengerGenerator psgGenerator;//仅用来生成乘客序列
-        public PackageGenerator pkgGenerator; //仅用来生成物资序列
-        public int mPackageGroupCount;//用于记录现在的Package是第几波
-        public Flood mFlood;
-        public Labyrinth mLabyrinth;
-        public int mPrevTime;//时间均改为以毫秒为单位,记录上一次的时间，精确到秒，实时更新
-        public int mGameTime;//时间均改为以毫秒为单位
-        public int mLastWrongDirTime;
-        public int mLastOnObstacleTime;
-        public FileStream FoulTimeFS;
-        public int mLastOnFloodTime;
-        public Flood mLastFlood;
+        public const int MINE_COUNT_MAX = 2;        // 场上最多同时有2个矿
 
-        public Game()//构造一个新的Game类 默认为CampA是先上半场上一阶段进行
+        public bool DebugMode;          // 调试模式，最大回合数 = 1,000,000
+        public GameState mGameState;     // 比赛状态
+        public GameStage mGameStage;     // 比赛阶段
+        public Camp UpperCamp;          // 当前回合需先上场的一方
+        public Car CarA, CarB;          // 定义小车
+        public Beacon mBeacon;          // 信标
+        public int mPrevTime;           // 时间均改为以毫秒为单位,记录上一次的时间，精确到毫秒，实时更新
+        public int mGameTime;           // 时间均改为以毫秒为单位
+        public FileStream FoulTimeFS;   // 犯规记录
+        public int mLastOnBeaconTime;   // 上一次触碰信标的时间，防止多次重复判断撞信标
+        public MineGenerator mMineGenerator;    // 用于生成金矿序列
+        public Dot mParkPoint;            // 第一回合的随机停车点
+        public Mine[] mMineArray;        // 当前在场上的矿的数组
+        public int[] mMineInMaze;          // 两矿是否在场上（1在场上，0已被收集运走）
+        public int mIsOverTime;             
+
+
+        // 构造一个新的Game类，默认为CampA是先上半场上一阶段进行
+        public Game()
         {
             Debug.WriteLine("开始执行Game构造函数");
-            gameStage = GameStage.FIRST_1;
+            mGameState = GameState.UNSTART;
+            mGameStage = GameStage.FIRST_A;
             UpperCamp = Camp.A;
             CarA = new Car(Camp.A, 0);
-            CarB = new Car(Camp.B, 1);
-            gameState = GameState.UNSTART;
-            psgState = PassengerState.TRAPPED;
-            psgGenerator = new PassengerGenerator(100);//上下半场将都用这一个索引
-            pkgGenerator = new PackageGenerator(PKG_NUM_perGROUP * 5);
-            currentPkgList = new Package[PKG_NUM_perGROUP];
-            for (int i = 0;i<PKG_NUM_perGROUP;i++)
+            CarB = new Car(Camp.B, 0);
+            mBeacon = new Beacon();
+            mPrevTime = GetCurrentTime();
+            mGameTime = 0;
+            mLastOnBeaconTime = -10;
+            Debug.WriteLine("Game构造函数FIRST_A执行完毕");
+            mMineGenerator = new MineGenerator();
+            mParkPoint = Court.ParkID2Dot(mMineGenerator.GetParkPoint());
+            mMineArray = mMineGenerator.GetStage1Mine();
+            mMineInMaze = new int[2];
+            mIsOverTime = 0;
+            for (int i = 0; i < mMineInMaze.Length; i++)
             {
-                currentPkgList[i] = new Package();
+                mMineInMaze[i] = 1;
             }
-            curPsg = new Passenger(new Dot(-1, -1), new Dot(-1, -1)); //?
-            mFlood = new Flood(0);
-            mLastFlood = new Flood(0);
-            mPackageGroupCount = 0;
-            mLastWrongDirTime = -10;
-            mLastOnObstacleTime = -10;
-            mLastOnFloodTime = -10;
-
-            mLabyrinth = new Labyrinth();
-            Debug.WriteLine("Game构造函数FIRST_1执行完毕");
-        }
-        #region
-        //每到半点自动更新Package信息函数,8.29已更新
-        public void UpdatePackage()//更换Package函数,每次都更新，而只在半分钟的时候起作用
-        {
-            if (gameStage == GameStage.FIRST_1
-                || gameStage == GameStage.LATTER_1)
-            {
-                return;
-            }
-            int changenum = mGameTime / 30000 + 1;
-            if ((gameStage == GameStage.FIRST_2
-                || gameStage == GameStage.LATTER_2)
-                && mPackageGroupCount < changenum)
-            {
-                for (int i = 0; i < PKG_NUM_perGROUP; i++)
-                {
-
-                    currentPkgList[i]
-                        = pkgGenerator.
-                        GetPackage(i + PKG_NUM_perGROUP * mPackageGroupCount);
-                }
-                mPackageGroupCount++;
-                Debug.WriteLine("UpdatePackage被触发，并执行完毕");
-                Debug.WriteLine("第一个物资位置x{0},y{1}", currentPkgList[0].mPos.x, currentPkgList[0].mPos.y);
-                Debug.WriteLine("第二个物资位置x{0},y{1}", currentPkgList[1].mPos.x, currentPkgList[1].mPos.y);
-                Debug.WriteLine("第三个物资位置x{0},y{1}", currentPkgList[2].mPos.x, currentPkgList[2].mPos.y);
-                Debug.WriteLine("第四个物资位置x{0},y{1}", currentPkgList[3].mPos.x, currentPkgList[3].mPos.y);
-                Debug.WriteLine("第五个物资位置x{0},y{1}", currentPkgList[4].mPos.x, currentPkgList[4].mPos.y);
-                Debug.WriteLine("第六个物资位置x{0},y{1}", currentPkgList[5].mPos.x, currentPkgList[5].mPos.y);
-            }
-
         }
 
-        //该方法用于返回系统现在的时间。开发者：xhl
+        #region 辅助函数
+
+        // 获取当前时间（秒）
         public int GetCurrentTime()
         {
             System.DateTime currentTime = System.DateTime.Now;
@@ -119,153 +74,75 @@ namespace EDCHOST22
             return time;
         }
 
-        public void SetFloodArea()
+        // 获取有效Beacon的数组
+        // flag：0返回A和B设置的全部有效信标；1返回A设置的有效信标；2返回B设置的有效信标
+        public Dot[] GetBeacon(int flag)
         {
-            int i, j;
-            if(mFlood.num==0)
+            if (flag == 0)
             {
-                for(i=0;i<6;i++)
+                Dot[] ret = new Dot[mBeacon.CarABeaconNum + mBeacon.CarBBeaconNum];
+                int idx = 0;
+                for (int i = 0; i < mBeacon.CarABeaconNum; i++)
                 {
-                    for(j=0;j<6;j++)
-                    {
-                        Dot judge = new Dot(MAZE_SIDE_BORDER_CM + MAZE_SHORT_BORDER_CM + MAZE_CROSS_DIST_CM * i, MAZE_SIDE_BORDER_CM + MAZE_SHORT_BORDER_CM + MAZE_CROSS_DIST_CM * j);
-                        if(gameStage==GameStage.FIRST_1)
-                        {
-                            if(GetDistance(judge,CarA.mPos)<=COINCIDE_ERR_DIST_CM)
-                            {
-                                mFlood.dot1 = judge;
-                                mFlood.num++;
-                            }
-                        }
-                        if (gameStage == GameStage.LATTER_1)
-                        {
-                            if (GetDistance(judge, CarB.mPos) <= COINCIDE_ERR_DIST_CM)
-                            {
-                                mFlood.dot1 = judge;
-                                mFlood.num++;
-                            }
-                        }
-                    }
+                    ret[idx] = new Dot(mBeacon.CarABeacon[i].x, mBeacon.CarABeacon[i].y);
+                    idx++;
                 }
+                for (int i = 0; i< mBeacon.CarBBeaconNum; i++)
+                {
+                    ret[idx++] = new Dot(mBeacon.CarBBeacon[i].x, mBeacon.CarBBeacon[i].y);
+                    idx++;
+                }
+                return ret;
             }
-            else if (mFlood.num == 1)
+            else if (flag == 1)
             {
-                for (i = 0; i < 6; i++)
+                Dot[] ret = new Dot[mBeacon.CarABeaconNum];
+                int idx = 0;
+                for (int i = 0; i < mBeacon.CarABeaconNum; i++)
                 {
-                    for (j = 0; j < 6; j++)
-                    {
-                        Dot judge = new Dot(MAZE_SIDE_BORDER_CM + MAZE_SHORT_BORDER_CM + MAZE_CROSS_DIST_CM * i, MAZE_SIDE_BORDER_CM + MAZE_SHORT_BORDER_CM + MAZE_CROSS_DIST_CM * j);
-                        if (gameStage == GameStage.FIRST_1)
-                        {
-                            if (GetDistance(judge, CarA.mPos) <= COINCIDE_ERR_DIST_CM)
-                            {
-                                mFlood.dot2 = judge;
-                                mFlood.num++;
-                            }
-                        }
-                        if (gameStage == GameStage.LATTER_1)
-                        {
-                            if (GetDistance(judge, CarB.mPos) <= COINCIDE_ERR_DIST_CM)
-                            {
-                                mFlood.dot2 = judge;
-                                mFlood.num++;
-                            }
-                        }
-                    }
+                    ret[idx] = new Dot(mBeacon.CarABeacon[i].x, mBeacon.CarABeacon[i].y);
+                    idx++;
                 }
+                return ret;
+
             }
-            else if (mFlood.num == 2)
+            else if (flag == 2)
             {
-                for (i = 0; i < 6; i++)
+                Dot[] ret = new Dot[mBeacon.CarBBeaconNum];
+                int idx = 0;
+                for (int i = 0; i < mBeacon.CarBBeaconNum; i++)
                 {
-                    for (j = 0; j < 6; j++)
-                    {
-                        Dot judge = new Dot(MAZE_SIDE_BORDER_CM + MAZE_SHORT_BORDER_CM + MAZE_CROSS_DIST_CM * i, MAZE_SIDE_BORDER_CM + MAZE_SHORT_BORDER_CM + MAZE_CROSS_DIST_CM * j);
-                        if (gameStage == GameStage.FIRST_1)
-                        {
-                            if (GetDistance(judge, CarA.mPos) <= COINCIDE_ERR_DIST_CM)
-                            {
-                                mFlood.dot3 = judge;
-                                mFlood.num++;
-                            }
-                        }
-                        if (gameStage == GameStage.LATTER_1)
-                        {
-                            if (GetDistance(judge, CarB.mPos) <= COINCIDE_ERR_DIST_CM)
-                            {
-                                mFlood.dot3 = judge;
-                                mFlood.num++;
-                            }
-                        }
-                    }
+                    ret[idx] = new Dot(mBeacon.CarBBeacon[i].x, mBeacon.CarBBeacon[i].y);
+                    idx++;
                 }
+                return ret;
             }
-            else if (mFlood.num == 3)
+            else
             {
-                for (i = 0; i < 6; i++)
-                {
-                    for (j = 0; j < 6; j++)
-                    {
-                        Dot judge = new Dot(MAZE_SIDE_BORDER_CM + MAZE_SHORT_BORDER_CM + MAZE_CROSS_DIST_CM * i, MAZE_SIDE_BORDER_CM + MAZE_SHORT_BORDER_CM + MAZE_CROSS_DIST_CM * j);
-                        if (gameStage == GameStage.FIRST_1)
-                        {
-                            if (GetDistance(judge, CarA.mPos) <= COINCIDE_ERR_DIST_CM)
-                            {
-                                mFlood.dot4 = judge;
-                                mFlood.num++;
-                            }
-                        }
-                        if (gameStage == GameStage.LATTER_1)
-                        {
-                            if (GetDistance(judge, CarB.mPos) <= COINCIDE_ERR_DIST_CM)
-                            {
-                                mFlood.dot4 = judge;
-                                mFlood.num++;
-                            }
-                        }
-                    }
-                }
-            }
-            else if (mFlood.num == 4)
-            {
-                for (i = 0; i < 6; i++)
-                {
-                    for (j = 0; j < 6; j++)
-                    {
-                        Dot judge = new Dot(MAZE_SIDE_BORDER_CM + MAZE_SHORT_BORDER_CM + MAZE_CROSS_DIST_CM * i, MAZE_SIDE_BORDER_CM + MAZE_SHORT_BORDER_CM + MAZE_CROSS_DIST_CM * j);
-                        if (gameStage == GameStage.FIRST_1)
-                        {
-                            if (GetDistance(judge, CarA.mPos) <= COINCIDE_ERR_DIST_CM)
-                            {
-                                mFlood.dot5 = judge;
-                                mFlood.num++;
-                            }
-                        }
-                        if (gameStage == GameStage.LATTER_1)
-                        {
-                            if (GetDistance(judge, CarB.mPos) <= COINCIDE_ERR_DIST_CM)
-                            {
-                                mFlood.dot5 = judge;
-                                mFlood.num++;
-                            }
-                        }
-                    }
-                }
+                return new Dot[0];
             }
         }
 
+        #endregion
 
-        //这个函数可能放到dot里面更好
-        public void JudgeAIsInMaze()//确定点是否在迷宫内
+
+        #region 自动更新
+
+        // 判断车是否在中心矿区内（及进入矿区自动加分）
+        public void JudgeAIsInMaze()
         {
             //Debug.WriteLine("开始执行JudgeAIsInMaze");
-            if (CarA.mPos.x >= MAZE_SHORT_BORDER_CM
-                && CarA.mPos.x <= MAZE_LONG_BORDER_CM
-                && CarA.mPos.y >= MAZE_SHORT_BORDER_CM
-                && CarA.mPos.y <= MAZE_LONG_BORDER_CM)
+            if (CarA.mPos.x >= Court.BORDER_CM
+                && CarA.mPos.x <= Court.BORDER_CM + Court.MAZE_SIZE_CM
+                && CarA.mPos.y >= Court.BORDER_CM
+                && CarA.mPos.y <= Court.BORDER_CM + Court.MAZE_SIZE_CM)
             {
                 //Debug.WriteLine("A 在 Maze 中");
                 CarA.mIsInMaze = 1;
+                if (CarA.WhetherCarIn == 0)
+                {
+                    CarA.SetCarIn();
+                }
             }
             else
             {
@@ -273,884 +150,628 @@ namespace EDCHOST22
                 CarA.mIsInMaze = 0;
             }
         }
-        public void JudgeBIsInMaze()//确定点是否在迷宫内
+        public void JudgeBIsInMaze()
         {
-            Debug.WriteLine("开始执行JudgeBIsInMaze");
-            if (CarB.mPos.x >= MAZE_SHORT_BORDER_CM
-                && CarB.mPos.x <= MAZE_LONG_BORDER_CM
-                && CarB.mPos.y >= MAZE_SHORT_BORDER_CM
-                && CarB.mPos.y <= MAZE_LONG_BORDER_CM)
+            //Debug.WriteLine("开始执行JudgeAIsInMaze");
+            if (CarB.mPos.x >= Court.BORDER_CM
+                && CarB.mPos.x <= Court.BORDER_CM + Court.MAZE_SIZE_CM
+                && CarB.mPos.y >= Court.BORDER_CM
+                && CarB.mPos.y <= Court.BORDER_CM + Court.MAZE_SIZE_CM)
             {
-                Debug.WriteLine("B 在 Maze 中");
+                //Debug.WriteLine("A 在 Maze 中");
                 CarB.mIsInMaze = 1;
+                if (CarB.WhetherCarIn == 0)
+                {
+                    CarB.SetCarIn();
+                }
             }
             else
             {
-                Debug.WriteLine("B 不在 Maze 中");
+                //Debug.WriteLine("A 不在 Maze 中");
                 CarB.mIsInMaze = 0;
             }
         }
 
-
-        //下面为更新乘客信息函数
-        public void UpdatePassenger()//更新乘客信息
+        // 判断是否在场地内
+        public void JudgeAIsInField()
         {
-            Debug.WriteLine("开始执行 Update Passenger");
-            curPsg = psgGenerator.Next();
-            Debug.WriteLine("乘客位置x{0},y{1}",curPsg.Start_Dot.x, curPsg.Start_Dot.y);
-            Debug.WriteLine("乘客位置x{0},y{1}", curPsg.End_Dot.x, curPsg.End_Dot.y);
-            Debug.WriteLine("Next Passenger 成功更新");
-        }
-
-        public void CheckNextStage()//从上半场更换到下半场函数
-        {
-            //判断是否结束
-            if (gameStage == GameStage.FIRST_1
-                || gameStage == GameStage.LATTER_1)
+            //Debug.WriteLine("开始执行JudgeAIsInField");
+            if (CarA.mPos.x >= 0
+                && CarA.mPos.x <= Court.MAX_SIZE_CM
+                && CarA.mPos.y >= 0
+                && CarA.mPos.y <= Court.MAX_SIZE_CM)
             {
-                if (mGameTime >= 60000)
-                {
-                    gameState = GameState.UNSTART;
-                    gameStage++;
-                    Debug.WriteLine("成功进入下一个stage");
-                    UpdatePassenger();
-                    mLastOnObstacleTime = -10;
-                }
+                //Debug.WriteLine("A 在 Field 中");
+                CarA.mIsInField = 1;
             }
             else
             {
-                if (mGameTime >= 120000)
-                {
-                    gameState = GameState.UNSTART;
-                    if (gameStage == GameStage.FIRST_2)
-                    {
-                        Debug.WriteLine("开始执行上下半场转换");
-                        UpperCamp = Camp.B;//上半场转换
-                        psgGenerator.ResetIndex();//Passenger的索引复位
-                        mPackageGroupCount = 0;
-                        mLastOnFloodTime = -10;
-                        mLastOnObstacleTime = -10;
-                        if (FoulTimeFS != null)                                           
-                        {
-                            byte[] data = Encoding.Default.GetBytes($"nextStage\r\n");
-                            FoulTimeFS.Write(data, 0, data.Length);
-                            // 如果不加以下两行的话，数据无法写到文件中
-                            FoulTimeFS.Flush();
-                            //FoulTimeFS.Close();
-                        }
-                        CarA.mTaskState = 1;//交换A和B的任务
-                        CarB.mTaskState = 0;
-                        gameStage++;
-                        Debug.WriteLine("上下半场转换成功");
-                        if(mLastFlood.num==1)
-                        {
-                            mLastFlood.dot1 = mFlood.dot1;
-                        }
-
-                    }
-                }
+                //Debug.WriteLine("A 不在 Field 中");
+                CarA.mIsInField = 0;
             }
-           
         }
-
-        //下面四个为接口
-        public void CheckCarAGetPassenger()//小车A接到了乘客
+        public void JudgeBIsInField()
         {
-            if (gameStage != GameStage.LATTER_2)
+            //Debug.WriteLine("开始执行JudgeBIsInField");
+            if (CarB.mPos.x >= 0
+                && CarB.mPos.x <= Court.MAX_SIZE_CM
+                && CarB.mPos.y >= 0
+                && CarB.mPos.y <= Court.MAX_SIZE_CM)
             {
-                return;
+                //Debug.WriteLine("B 在 Field 中");
+                CarB.mIsInField = 1;
             }
-            if (GetDistance(CarA.mPos, curPsg.Start_Dot)
-                <= COINCIDE_ERR_DIST_CM
-                && CarA.mIsWithPassenger == 0)
+            else
             {
-                Debug.WriteLine("A车接到了乘客，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                CarA.SwitchPassengerState();
-            }
-
-        }
-        public void CheckCarBGetPassenger()//小车B接到了乘客
-        {
-            if (gameStage != GameStage.FIRST_2)
-            {
-                return;
-            }
-            if (GetDistance(CarB.mPos, curPsg.Start_Dot)
-                <= COINCIDE_ERR_DIST_CM
-                && CarB.mIsWithPassenger == 0)
-            {
-                Debug.WriteLine("B车接到了乘客，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                CarB.SwitchPassengerState();
-            }
-        }
-        public void CheckCarATransPassenger()//小车A成功运送了乘客
-        {
-            if (gameStage != GameStage.LATTER_2)
-            {
-                return;
-            }
-
-            if (GetDistance(CarA.mPos, curPsg.End_Dot)
-                <= COINCIDE_ERR_DIST_CM
-                && CarA.mIsWithPassenger == 1)
-            {
-                CarA.SwitchPassengerState();
-                CarA.AddRescueCount();
-                Debug.WriteLine("A车送达了乘客，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                UpdatePassenger();
-            }
-            
-        }
-        public void CheckCarBTransPassenger()//小车B成功运送了乘客
-        {
-            if (gameStage != GameStage.FIRST_2)
-            {
-                return;
-            }
-            if (GetDistance(CarB.mPos, curPsg.End_Dot)
-                <= COINCIDE_ERR_DIST_CM
-                && CarB.mIsWithPassenger == 1)
-            {
-                CarB.SwitchPassengerState();
-                CarB.AddRescueCount();
-                Debug.WriteLine("B车送达了乘客，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                UpdatePassenger();
-            }
-            
-        }
-
-        //下面是两个关于包裹的接口
-        public void CheckCarAGetpackage()//小车A得到了包裹
-        {
-            if (gameStage != GameStage.LATTER_2)
-            {
-                return;
-            }
-            for (int i = 0; i < PKG_NUM_perGROUP; i++)
-            {
-                if (GetDistance(CarA.mPos, currentPkgList[i].mPos)
-                    <= COINCIDE_ERR_DIST_CM
-                    && currentPkgList[i].IsPicked == 0)
-                {
-                    CarA.AddPickPkgCount();
-                    currentPkgList[i].IsPicked = 1;
-                    Debug.WriteLine("A车接到了包裹，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                }
-            }
-
-        }
-        public void CheckCarBGetpackage()//小车B得到了包裹
-        {
-            if (gameStage != GameStage.FIRST_2)
-            {
-                return;
-            }
-            for (int i = 0; i < PKG_NUM_perGROUP; i++)
-            {
-                if (GetDistance(CarB.mPos, currentPkgList[i].mPos)
-                    <= COINCIDE_ERR_DIST_CM
-                    && currentPkgList[i].IsPicked == 0)
-                {
-                    CarB.AddPickPkgCount();
-                    currentPkgList[i].IsPicked = 1;
-                    Debug.WriteLine("B车接到了包裹，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                }
-
+                //Debug.WriteLine("B 不在 Field 中");
+                CarB.mIsInField = 0;
             }
         }
 
-        public void CheckCarAonObstacle()//小车A到达了障碍上              
-        {
-            for (int i = 0; i < 8; i++)
-            {
-                if (mLabyrinth.mpWallList[i].w1.x
-                    == mLabyrinth.mpWallList[i].w2.x)//障碍的两个点的横坐标相同
-                {
-                    if (mLabyrinth.mpWallList[i].w1.y
-                        < mLabyrinth.mpWallList[i].w2.y)//障碍1在障碍2的下面
-                    {
-                        if (mLabyrinth.mpWallList[i].w1.x >= CarA.mPos.x - 5
-                            && mLabyrinth.mpWallList[i].w1.x <= CarA.mPos.x + 5
-                            && CarA.mPos.y <= mLabyrinth.mpWallList[i].w2.y
-                            && mLabyrinth.mpWallList[i].w1.y <= CarA.mPos.y
-                            && (mLabyrinth.mpWallList[i].w1.x <= CarA.mLastPos.x - 5
-                            || mLabyrinth.mpWallList[i].w1.x >= CarA.mLastPos.x + 5
-                            || CarA.mLastPos.y >= mLabyrinth.mpWallList[i].w2.y
-                            || mLabyrinth.mpWallList[i].w1.y >= CarA.mLastPos.y)&& mGameTime - mLastOnObstacleTime >= 1000)
-                        {
-                            CarA.AddWallPunish();
-                            Debug.WriteLine("A车撞到了竖着的墙，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                            mLastOnObstacleTime = mGameTime;
-                        }
-
-                    }
-                    if (mLabyrinth.mpWallList[i].w2.y < mLabyrinth.mpWallList[i].w1.y)//障碍2在障碍1的下面
-                    {
-                        if (mLabyrinth.mpWallList[i].w1.x >= CarA.mPos.x - 5
-                            && mLabyrinth.mpWallList[i].w1.x <= CarA.mPos.x + 5
-                            && CarA.mPos.y <= mLabyrinth.mpWallList[i].w1.y
-                            && mLabyrinth.mpWallList[i].w2.y <= CarA.mPos.y
-                            && (mLabyrinth.mpWallList[i].w1.x <= CarA.mLastPos.x - 5
-                            || mLabyrinth.mpWallList[i].w1.x >= CarA.mLastPos.x + 5
-                            || CarA.mLastPos.y >= mLabyrinth.mpWallList[i].w1.y
-                            || mLabyrinth.mpWallList[i].w2.y >= CarA.mLastPos.y)&& mGameTime-mLastOnObstacleTime>=1000)
-                        {
-                            CarA.AddWallPunish();
-                            Debug.WriteLine("A车撞到了竖着的墙，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                            mLastOnObstacleTime = mGameTime;
-                        }
-
-                    }
-                }
-                if (mLabyrinth.mpWallList[i].w1.y == mLabyrinth.mpWallList[i].w2.y)//障碍的两个点的纵坐标相同
-                {
-                    if (mLabyrinth.mpWallList[i].w1.x < mLabyrinth.mpWallList[i].w2.x)//障碍1在障碍2的左面
-                    {
-                        if (mLabyrinth.mpWallList[i].w1.y >= CarA.mPos.y - 5
-                            && mLabyrinth.mpWallList[i].w1.y <= CarA.mPos.y + 5
-                            && CarA.mPos.x <= mLabyrinth.mpWallList[i].w2.x
-                            && mLabyrinth.mpWallList[i].w1.x <= CarA.mPos.x
-                            && (mLabyrinth.mpWallList[i].w1.y <= CarA.mLastPos.y - 5
-                            || mLabyrinth.mpWallList[i].w1.y >= CarA.mLastPos.y + 5
-                            || CarA.mLastPos.x >= mLabyrinth.mpWallList[i].w2.x
-                            || mLabyrinth.mpWallList[i].w1.x >= CarA.mLastPos.x)&& mGameTime - mLastOnObstacleTime >= 1000)
-                        {
-                            CarA.AddWallPunish();
-                            Debug.WriteLine("A车撞到了横着的墙，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                            mLastOnObstacleTime = mGameTime;
-                        }
-
-                    }
-                    if (mLabyrinth.mpWallList[i].w2.x < mLabyrinth.mpWallList[i].w1.x)//障碍2在障碍1的
-                    {
-                        if (mLabyrinth.mpWallList[i].w1.y >= CarA.mPos.y - 5
-                            && mLabyrinth.mpWallList[i].w1.y <= CarA.mPos.y + 5
-                            && CarA.mPos.x <= mLabyrinth.mpWallList[i].w1.x
-                            && mLabyrinth.mpWallList[i].w2.x <= CarA.mPos.x
-                            && (mLabyrinth.mpWallList[i].w1.y <= CarA.mLastPos.y - 5
-                            || mLabyrinth.mpWallList[i].w1.y >= CarA.mLastPos.y + 5
-                            || CarA.mLastPos.x >= mLabyrinth.mpWallList[i].w1.x
-                            || mLabyrinth.mpWallList[i].w2.x >= CarA.mLastPos.x)&& mGameTime - mLastOnObstacleTime >= 1000)
-                        {
-                            CarA.AddWallPunish();
-                            Debug.WriteLine("A车撞到了横着的墙，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                            mLastOnObstacleTime = mGameTime;
-                        }
-                    }
-                }
-            }
-        }
-        public void CheckCarBonObstacle()//小车B到达了障碍上               
-        {
-            for (int i = 0; i < 8; i++)
-            {
-                if (mLabyrinth.mpWallList[i].w1.x
-                    == mLabyrinth.mpWallList[i].w2.x)//障碍的两个点的横坐标相同
-                {
-                    if (mLabyrinth.mpWallList[i].w1.y
-                        < mLabyrinth.mpWallList[i].w2.y)//障碍1在障碍2的下面
-                    {
-                        if (mLabyrinth.mpWallList[i].w1.x >= CarB.mPos.x - 5
-                            && mLabyrinth.mpWallList[i].w1.x <= CarB.mPos.x + 5
-                            && CarB.mPos.y <= mLabyrinth.mpWallList[i].w2.y
-                            && mLabyrinth.mpWallList[i].w1.y <= CarB.mPos.y
-                            && (mLabyrinth.mpWallList[i].w1.x <= CarB.mLastPos.x - 5
-                            || mLabyrinth.mpWallList[i].w1.x >= CarB.mLastPos.x + 5
-                            || CarB.mLastPos.y >= mLabyrinth.mpWallList[i].w2.y
-                            || mLabyrinth.mpWallList[i].w1.y >= CarB.mLastPos.y)&& mGameTime - mLastOnObstacleTime >= 1000)
-                        {
-                            CarB.AddWallPunish();
-                            Debug.WriteLine("B车撞到了竖着的墙，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                            mLastOnObstacleTime = mGameTime;
-                        }
-
-                    }
-                    if (mLabyrinth.mpWallList[i].w2.y < mLabyrinth.mpWallList[i].w1.y)//障碍2在障碍1的下面
-                    {
-                        if (mLabyrinth.mpWallList[i].w1.x >= CarB.mPos.x - 5
-                            && mLabyrinth.mpWallList[i].w1.x <= CarB.mPos.x + 5
-                            && CarB.mPos.y <= mLabyrinth.mpWallList[i].w1.y
-                            && mLabyrinth.mpWallList[i].w2.y <= CarB.mPos.y
-                            && (mLabyrinth.mpWallList[i].w1.x <= CarB.mLastPos.x - 5
-                            || mLabyrinth.mpWallList[i].w1.x >= CarB.mLastPos.x + 5
-                            || CarB.mLastPos.y >= mLabyrinth.mpWallList[i].w1.y
-                            || mLabyrinth.mpWallList[i].w2.y >= CarB.mLastPos.y)&& mGameTime - mLastOnObstacleTime >= 1000)
-                        {
-                            CarB.AddWallPunish();
-                            Debug.WriteLine("B车撞到了竖着的墙，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                            mLastOnObstacleTime = mGameTime;
-                        }
-
-                    }
-                }
-                if (mLabyrinth.mpWallList[i].w1.y == mLabyrinth.mpWallList[i].w2.y)//障碍的两个点的纵坐标相同
-                {
-                    if (mLabyrinth.mpWallList[i].w1.x < mLabyrinth.mpWallList[i].w2.x)//障碍1在障碍2的左面
-                    {
-                        if (mLabyrinth.mpWallList[i].w1.y >= CarB.mPos.y - 5
-                            && mLabyrinth.mpWallList[i].w1.y <= CarB.mPos.y + 5
-                            && CarB.mPos.x <= mLabyrinth.mpWallList[i].w2.x
-                            && mLabyrinth.mpWallList[i].w1.x <= CarB.mPos.x
-                            && (mLabyrinth.mpWallList[i].w1.y <= CarB.mLastPos.y - 5
-                            || mLabyrinth.mpWallList[i].w1.y >= CarB.mLastPos.y + 5
-                            || CarB.mLastPos.x >= mLabyrinth.mpWallList[i].w2.x
-                            || mLabyrinth.mpWallList[i].w1.x >= CarB.mLastPos.x)&& mGameTime - mLastOnObstacleTime >= 1000)
-                        {
-                            CarB.AddWallPunish();
-                            Debug.WriteLine("B车撞到了横着的墙，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                            mLastOnObstacleTime = mGameTime;
-                        }
-
-                    }
-                    if (mLabyrinth.mpWallList[i].w2.x < mLabyrinth.mpWallList[i].w1.x)//障碍2在障碍1的
-                    {
-                        if (mLabyrinth.mpWallList[i].w1.y >= CarB.mPos.y - 5
-                            && mLabyrinth.mpWallList[i].w1.y <= CarB.mPos.y + 5
-                            && CarB.mPos.x <= mLabyrinth.mpWallList[i].w1.x
-                            && mLabyrinth.mpWallList[i].w2.x <= CarB.mPos.x
-                            && (mLabyrinth.mpWallList[i].w1.y <= CarB.mLastPos.y - 5
-                            || mLabyrinth.mpWallList[i].w1.y >= CarB.mLastPos.y + 5
-                            || CarB.mLastPos.x >= mLabyrinth.mpWallList[i].w1.x
-                            || mLabyrinth.mpWallList[i].w2.x >= CarB.mLastPos.x)&& mGameTime - mLastOnObstacleTime >= 1000)
-                        {
-                            CarB.AddWallPunish();
-                            Debug.WriteLine("B车撞到了横着的墙，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                            mLastOnObstacleTime = mGameTime;
-                        }
-                    }
-                }
-            }
-        }
-        public void CheckCarAonFlood()//A车到大障碍上
-        {
-
-            if (CarA.mTaskState == 1)//在下半场的时候才应该判断小车是否经过Flood
-            {
-                if (mFlood.num == 0)
-                {
-                }
-                else if (mFlood.num == 1)
-                {
-                    if (GetDistance(CarA.mPos, mFlood.dot1) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot1) >= COINCIDE_ERR_DIST_CM && mGameTime-mLastOnFloodTime>=1000)
-                    {
-
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                }
-                else if (mFlood.num == 2)
-                {
-
-                    if (GetDistance(CarA.mPos, mFlood.dot1) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot1) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarA.mPos, mFlood.dot2) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot2) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                }
-                else if (mFlood.num == 3)
-                {
-
-                    if (GetDistance(CarA.mPos, mFlood.dot1) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot1) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarA.mPos, mFlood.dot2) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot2) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarA.mPos, mFlood.dot3) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot3) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                }
-                else if (mFlood.num == 4)
-                {
-
-                    if (GetDistance(CarA.mPos, mFlood.dot1) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot1) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarA.mPos, mFlood.dot2) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot2) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarA.mPos, mFlood.dot3) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot3) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarA.mPos, mFlood.dot4) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot4) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                }
-                else if (mFlood.num == 5)
-                {
-
-                    if (GetDistance(CarA.mPos, mFlood.dot1) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot1) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarA.mPos, mFlood.dot2) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot2) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarA.mPos, mFlood.dot3) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot3) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarA.mPos, mFlood.dot4) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot4) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarA.mPos, mFlood.dot5) <= COINCIDE_ERR_DIST_CM && GetDistance(CarA.mLastPos, mFlood.dot5) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarA.AddFloodPunish();
-                        Debug.WriteLine("A车撞到了泄洪口，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                }
-
-            }
-        }
-        public void CheckCarBonFlood()
-        {
-            if (CarB.mTaskState == 1)//在下半场的时候才应该判断小车是否经过Flood
-            {
-                if (mFlood.num == 0)
-                {
-                }
-                else if (mFlood.num == 1)
-                {
-                    if (GetDistance(CarB.mPos, mFlood.dot1) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot1) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                }
-                else if (mFlood.num == 2)
-                {
-
-                    if (GetDistance(CarB.mPos, mFlood.dot1) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot1) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                    }
-                    if (GetDistance(CarB.mPos, mFlood.dot2) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot2) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                }
-                else if (mFlood.num == 3)
-                {
-
-                    if (GetDistance(CarB.mPos, mFlood.dot1) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot1) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                    }
-                    if (GetDistance(CarB.mPos, mFlood.dot2) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot2) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarB.mPos, mFlood.dot3) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot3) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                }
-                else if (mFlood.num == 4)
-                {
-
-                    if (GetDistance(CarB.mPos, mFlood.dot1) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot1) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                    }
-                    if (GetDistance(CarB.mPos, mFlood.dot2) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot2) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarB.mPos, mFlood.dot3) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot3) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarB.mPos, mFlood.dot4) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot4) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                }
-                else if (mFlood.num == 5)
-                {
-
-                    if (GetDistance(CarB.mPos, mFlood.dot1) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot1) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                    }
-                    if (GetDistance(CarB.mPos, mFlood.dot2) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot2) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarB.mPos, mFlood.dot3) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot3) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarB.mPos, mFlood.dot4) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot4) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                    if (GetDistance(CarB.mPos, mFlood.dot5) <= COINCIDE_ERR_DIST_CM && GetDistance(CarB.mLastPos, mFlood.dot5) >= COINCIDE_ERR_DIST_CM && mGameTime - mLastOnFloodTime >= 1000)
-                    {
-                        CarB.AddFloodPunish();
-                        Debug.WriteLine("B车撞到了泄洪口，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                        mLastOnFloodTime = mGameTime;
-                    }
-                }
-
-            }
-        }
-        //逆行自动判断//目前为思路两次逆行之间间隔时间判断为5s，这5s之间的逆行忽略不计
-        public void CheckCarAWrongDirection()
-        {
-            if (CarA.mLastPos.x < MAZE_SHORT_BORDER_CM && CarA.mPos.x < MAZE_SHORT_BORDER_CM
-                && CarA.mLastPos.y > MAZE_SHORT_BORDER_CM && CarA.mLastPos.y < MAZE_LONG_BORDER_CM
-                && CarA.mPos.y > MAZE_SHORT_BORDER_CM && CarA.mPos.y < MAZE_LONG_BORDER_CM
-                && CarA.mPos.y > CarA.mLastPos.y && mGameTime - mLastWrongDirTime > 5000)
-            {
-                CarA.AddWrongDirection();
-                mLastWrongDirTime = mGameTime;
-                Debug.WriteLine("A车逆行！第{0}次", CarA.mWrongDirCount);
-            }
-            if (CarA.mLastPos.x > MAZE_LONG_BORDER_CM && CarA.mPos.x > MAZE_LONG_BORDER_CM
-                && CarA.mLastPos.y > MAZE_SHORT_BORDER_CM
-                && CarA.mLastPos.y < MAZE_LONG_BORDER_CM && CarA.mPos.y > MAZE_SHORT_BORDER_CM
-                && CarA.mPos.y < MAZE_LONG_BORDER_CM && CarA.mPos.y < CarA.mLastPos.y 
-                && mGameTime - mLastWrongDirTime > 5000)
-            {
-                CarA.AddWrongDirection();
-                mLastWrongDirTime = mGameTime;
-                Debug.WriteLine("A车逆行！第{0}次", CarA.mWrongDirCount);
-            }
-            if (CarA.mLastPos.y < MAZE_SHORT_BORDER_CM && CarA.mPos.y < MAZE_SHORT_BORDER_CM
-                && CarA.mLastPos.x > MAZE_SHORT_BORDER_CM && CarA.mLastPos.x < MAZE_LONG_BORDER_CM
-                && CarA.mPos.x > MAZE_SHORT_BORDER_CM && CarA.mPos.x < MAZE_LONG_BORDER_CM
-                && CarA.mPos.x < CarA.mLastPos.x && mGameTime - mLastWrongDirTime > 5000)
-            {
-                CarA.AddWrongDirection();
-                mLastWrongDirTime = mGameTime;
-                Debug.WriteLine("A车逆行！第{0}次", CarA.mWrongDirCount);
-            }
-            if (CarA.mLastPos.y > MAZE_LONG_BORDER_CM && CarA.mPos.y > MAZE_LONG_BORDER_CM
-                && CarA.mLastPos.x > MAZE_SHORT_BORDER_CM
-                && CarA.mLastPos.x < MAZE_LONG_BORDER_CM && CarA.mPos.x > MAZE_SHORT_BORDER_CM
-                && CarA.mPos.x < MAZE_LONG_BORDER_CM && CarA.mPos.x > CarA.mLastPos.x 
-                && mGameTime - mLastWrongDirTime > 5000)
-            {
-                CarA.AddWrongDirection();
-                mLastWrongDirTime = mGameTime;
-                Debug.WriteLine("A车逆行！第{0}次", CarA.mWrongDirCount);
-            }
-        }
-        public void CheckCarBWrongDirection()
-        {
-            if (CarB.mLastPos.x < MAZE_SHORT_BORDER_CM && CarB.mPos.x < MAZE_SHORT_BORDER_CM
-                && CarB.mLastPos.y > MAZE_SHORT_BORDER_CM && CarB.mLastPos.y < MAZE_LONG_BORDER_CM
-                && CarB.mPos.y > MAZE_SHORT_BORDER_CM && CarB.mPos.y < MAZE_LONG_BORDER_CM
-                && CarB.mPos.y > CarB.mLastPos.y && mGameTime - mLastWrongDirTime > 5000)
-            {
-                CarB.AddWrongDirection();
-                mLastWrongDirTime = mGameTime;
-                Debug.WriteLine("B车逆行！第{0}次", CarB.mWrongDirCount);
-            }
-            if (CarB.mLastPos.x > MAZE_LONG_BORDER_CM && CarB.mPos.x > MAZE_LONG_BORDER_CM
-                && CarB.mLastPos.y > MAZE_SHORT_BORDER_CM && CarB.mLastPos.y < MAZE_LONG_BORDER_CM
-                && CarB.mPos.y > MAZE_SHORT_BORDER_CM && CarB.mPos.y < MAZE_LONG_BORDER_CM
-                && CarB.mPos.y < CarB.mLastPos.y && mGameTime - mLastWrongDirTime > 5000)
-            {
-                CarB.AddWrongDirection();
-                mLastWrongDirTime = mGameTime;
-                Debug.WriteLine("B车逆行！第{0}次", CarB.mWrongDirCount);
-            }
-            if (CarB.mLastPos.y < MAZE_SHORT_BORDER_CM && CarB.mPos.y < MAZE_SHORT_BORDER_CM
-                && CarB.mLastPos.x > MAZE_SHORT_BORDER_CM && CarB.mLastPos.x < MAZE_LONG_BORDER_CM
-                && CarB.mPos.x > MAZE_SHORT_BORDER_CM && CarB.mPos.x < MAZE_LONG_BORDER_CM
-                && CarB.mPos.x < CarB.mLastPos.x && mGameTime - mLastWrongDirTime > 5000)
-            {
-                CarB.AddWrongDirection();
-                mLastWrongDirTime = mGameTime;
-                Debug.WriteLine("B车逆行！第{0}次", CarB.mWrongDirCount);
-            }
-            if (CarB.mLastPos.y > MAZE_LONG_BORDER_CM && CarB.mPos.y > MAZE_LONG_BORDER_CM
-                && CarB.mLastPos.x > MAZE_SHORT_BORDER_CM && CarB.mLastPos.x < MAZE_LONG_BORDER_CM
-                && CarB.mPos.x > MAZE_SHORT_BORDER_CM && CarB.mPos.x < MAZE_LONG_BORDER_CM
-                && CarB.mPos.x > CarB.mLastPos.x && mGameTime - mLastWrongDirTime > 5000)
-            {
-                CarB.AddWrongDirection();
-                mLastWrongDirTime = mGameTime;
-                Debug.WriteLine("B车逆行！第{0}次", CarB.mWrongDirCount);
-            }
-        }
-
-
-
+        // 更新游戏时间
         public void UpdateGameTime()
         {
-            if (gameState == GameState.NORMAL)
+            if (mGameState == GameState.NORMAL)
             {
                 mGameTime = GetCurrentTime() - mPrevTime + mGameTime;
             }
             mPrevTime = GetCurrentTime();
         }
-        #endregion
 
-        public void UpdateCarATransmPos()
+        // 更新车的发送位置
+        public void UpdateCarATransPos()
         {
-            if(gameState == GameState.NORMAL)
+            if (mGameState == GameState.NORMAL)
             {
-                if(CarA.mIsInMaze==0||CarA.mRightPosCount==9)
+                if (mGameStage == GameStage.FIRST_A)
                 {
                     CarA.mTransPos = CarA.mPos;
-                    CarA.mRightPosCount = 0;
-                    CarA.mRightPos = 1;
                 }
-                if(CarA.mIsInMaze==1 && CarA.mRightPosCount!=9)
+                else if (mGameStage == GameStage.SECOND_A && CarA.mIsInMaze != 1)
                 {
-                    CarA.mRightPosCount++;
-                    CarA.mRightPos = 0;
-                }
-            }
-        }
-        public void UpdateCarBTransmPos()
-        {
-            if (gameState == GameState.NORMAL)
-            {
-                if (CarB.mIsInMaze == 0 || CarB.mRightPosCount == 9)
-                {
-                    CarB.mTransPos = CarB.mPos;
-                    CarB.mRightPosCount = 0;
-                    CarB.mRightPos = 1;
-                }
-                if (CarB.mIsInMaze == 1 && CarB.mRightPosCount != 9)
-                {
-                    CarB.mRightPosCount++;
-                    CarB.mRightPos = 0;
-                }
-            }
-        }
-        //0.1s
-        public void Update()
-        {
-            if (gameState == GameState.NORMAL)
-            {
-                UpdateGameTime();
-                UpdatePackage();
-                if (gameStage == GameStage.FIRST_1 || gameStage == GameStage.LATTER_2)
-                {
-                    JudgeAIsInMaze();
-                    CheckCarAGetpackage();
-                    CheckCarAGetPassenger();
-                    CheckCarAonFlood();
-                    CheckCarAonObstacle();
-                    CheckCarATransPassenger();
-                    //CheckCarAWrongDirection();
-                    Debug.WriteLine("0.1 Update！");
+                    CarA.mTransPos = CarA.mPos;
                 }
                 else
                 {
+                    CarA.mTransPos.SetInfo(-10, -10);
+                }
+            }
+        }
+        public void UpdateCarBTransPos()
+        {
+            if (mGameState == GameState.NORMAL)
+            {
+                if (mGameStage == GameStage.FIRST_B)
+                {
+                    CarB.mTransPos = CarB.mPos;
+                }
+                else if (mGameStage == GameStage.SECOND_B && CarB.mIsInMaze != 1)
+                {
+                    CarB.mTransPos = CarB.mPos;
+                }
+                else
+                {
+                    CarB.mTransPos.SetInfo(-10, -10);
+                }
+            }
+        }
+
+        // 更新车碰到对家信标
+        public void CheckCarAOnBeacon()
+        {
+            if (mGameStage == GameStage.SECOND_A)
+            {
+                Dot[] beaconArray = GetBeacon(2);
+                if (Dot.InCollisionZones(CarA.mPos, beaconArray) && 
+                    (!Dot.InCollisionZones(CarA.mLastPos, beaconArray)) &&
+                    mGameTime - mLastOnBeaconTime >= 1000)
+                {
+                    CarA.AddCrossBeacon();
+                    Debug.WriteLine("A车撞到了B放置的信标，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
+                    mLastOnBeaconTime = mGameTime;
+                }
+            }
+        }
+        public void CheckCarBOnBeacon()
+        {
+            if (mGameStage == GameStage.SECOND_B)
+            {
+                Dot[] beaconArray = GetBeacon(1);
+                if (Dot.InCollisionZones(CarB.mPos, beaconArray) &&
+                    (!Dot.InCollisionZones(CarB.mLastPos, beaconArray)) &&
+                    mGameTime - mLastOnBeaconTime >= 1000)
+                {
+                    CarB.AddCrossBeacon();
+                    Debug.WriteLine("B车撞到了A放置的信标，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
+                    mLastOnBeaconTime = mGameTime;
+                }
+            }
+        }
+
+        // 更新车收集到了金矿
+        public void CheckCarAGetMine()
+        {
+            if (mGameState == GameState.NORMAL)
+            {
+                if (mGameStage == GameStage.FIRST_A)
+                {
+                    if (CarA.IsMineStateFull())
+                    {
+                        return;
+                    }
+                    int flag = -1;
+                    for (int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        if (Dot.InCollisionZone(CarA.mPos, mMineArray[i].Pos))
+                        {
+                            flag = i;
+                            break;
+                        }
+                    }
+                    if (flag != -1)
+                    {
+                        mMineInMaze[flag] = 0;
+                        CarA.AddMineLoad(0);
+                        CarA.AddMineState();
+                    }
+                }
+                else if (mGameStage == GameStage.SECOND_A)
+                {
+                    if (CarA.IsMineStateFull())
+                    {
+                        return;
+                    }
+                    int flag = -1;
+                    for (int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        if (Dot.InCollisionZone(CarA.mPos, mMineArray[i].Pos))
+                        {
+                            flag = i;
+                            break;
+                        }
+                    }
+                    if (flag != -1)
+                    {
+                        mMineInMaze[flag] = 0;
+                        CarA.AddMineLoad(0);
+                        CarA.AddMineState();
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+        }
+        public void CheckCarBGetMine()
+        {
+            if (mGameState == GameState.NORMAL)
+            {
+                if (mGameStage == GameStage.FIRST_B)
+                {
+                    if (CarB.IsMineStateFull())
+                    {
+                        return;
+                    }
+                    int flag = -1;
+                    for (int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        if (Dot.InCollisionZone(CarB.mPos, mMineArray[i].Pos))
+                        {
+                            flag = i;
+                            break;
+                        }
+                    }
+                    if (flag != -1)
+                    {
+                        mMineInMaze[flag] = 0;
+                        CarB.AddMineLoad(0);
+                        CarB.AddMineState();
+                    }
+                }
+                else if (mGameStage == GameStage.SECOND_B)
+                {
+                    if (CarB.IsMineStateFull())
+                    {
+                        return;
+                    }
+                    int flag = -1;
+                    for (int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        if (Dot.InCollisionZone(CarB.mPos, mMineArray[i].Pos))
+                        {
+                            flag = i;
+                            break;
+                        }
+                    }
+                    if (flag != -1)
+                    {
+                        mMineInMaze[flag] = 0;
+                        CarB.AddMineLoad(0);
+                        CarB.AddMineState();
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+        }
+
+        // 更新车是否完成矿的运送
+        public void CheckCarAUnloadMine()
+        {
+            if (mGameState == GameState.NORMAL)
+            {
+                if (mGameStage == GameStage.FIRST_A)
+                {
+                    if (CarA.mMineState == MINE_COUNT_MAX &&
+                        Dot.InCollisionZone(CarA.mPos, mParkPoint))
+                    {
+                        CarA.AddMineUnload(0);
+                        CarA.ClearMineState();
+                        if (mGameTime < 60000)
+                        {
+                            CarA.SetAheadSec((60000 - mGameTime) / 1000);
+                        }
+                    }
+                }
+                else if (mGameStage == GameStage.SECOND_A)
+                {
+                    Dot[] beaconList = new Dot[mBeacon.CarABeaconNum];
+                    for (int i = 0; i < mBeacon.CarABeaconNum; i++)
+                    {
+                        beaconList[i] = mBeacon.CarABeacon[i];
+                    }
+                    if (CarA.IsMineStateFull() &&
+                        Dot.InCollisionZones(CarA.mPos, beaconList))
+                    {
+                        CarA.AddMineUnload(1);
+                        CarA.ClearMineState();
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+        }
+        public void CheckCarBUnloadMine()
+        {
+            if (mGameState == GameState.NORMAL)
+            {
+                if (mGameStage == GameStage.FIRST_B)
+                {
+                    if (CarB.mMineState == MINE_COUNT_MAX &&
+                        Dot.InCollisionZone(CarB.mPos, mParkPoint))
+                    {
+                        CarB.AddMineUnload(0);
+                        CarB.ClearMineState();
+                        if (mGameTime < 60000)
+                        {
+                            CarB.SetAheadSec((60000 - mGameTime) / 1000);
+                        }
+                    }
+                }
+                else if (mGameStage == GameStage.SECOND_B)
+                {
+                    Dot[] beaconList = new Dot[mBeacon.CarBBeaconNum];
+                    for (int i = 0; i < mBeacon.CarBBeaconNum; i++)
+                    {
+                        beaconList[i] = mBeacon.CarBBeacon[i];
+                    }
+                    if (CarB.IsMineStateFull() &&
+                        Dot.InCollisionZones(CarB.mPos, beaconList))
+                    {
+                        CarB.AddMineUnload(1);
+                        CarB.ClearMineState();
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+        }
+
+        // 更新矿的分布
+        public void UpdateMine()
+        {
+            if (mGameStage == GameStage.FIRST_A ||
+                mGameStage == GameStage.FIRST_B ||
+                mGameStage == GameStage.END ||
+                mGameState != GameState.NORMAL)
+            {
+                return;
+            }
+            Debug.WriteLine("开始执行UpdateMine");
+            for (int  i = 0; i < MINE_COUNT_MAX; i++)
+            {
+                if (mMineInMaze[i] == 0)
+                {
+                    mMineInMaze[i] = 1;
+                    mMineArray[i] = mMineGenerator.GetNextMine();
+                    Debug.WriteLine($"更新矿物位置x = {0}, y = {1}", mMineArray[i].Pos.x, mMineArray[i].Pos.y);
+                }
+            }
+            Debug.WriteLine("执行完毕UpdateMine");
+        }
+
+        // 转换到下一阶段
+        public void CheckNextStage()
+        {
+            if (mGameStage == GameStage.FIRST_A)
+            {
+                int flag = 0;
+                for (int i = 0; i < MINE_COUNT_MAX; i++)
+                {
+                    flag += mMineInMaze[i];
+                }
+                if (mGameTime > 60000 || flag == 0)
+                {
+                    mGameState = GameState.UNSTART;
+                    mGameStage++;
+                    for(int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        mMineInMaze[i] = 1;
+                    }
+                    UpperCamp = Camp.B;
+                    CarA.mTaskState = 1;
+                    if (FoulTimeFS != null)
+                    {
+                        byte[] data = Encoding.Default.GetBytes($"nextStage\r\n");
+                        FoulTimeFS.Write(data, 0, data.Length);
+                        // 如果不加以下两行的话，数据无法写到文件中
+                        FoulTimeFS.Flush();
+                        //FoulTimeFS.Close();
+                    }
+                    Debug.WriteLine("成功进入下一个stage");
+                }
+            }
+            else if (mGameStage == GameStage.FIRST_B)
+            {
+                int flag = 0;
+                for (int i = 0; i < MINE_COUNT_MAX; i++)
+                {
+                    flag += mMineInMaze[i];
+                }
+                if (mGameTime > 60000 || flag == 0)
+                {
+                    mGameState = GameState.UNSTART;
+                    mMineGenerator.GenerateStage2(mBeacon);
+                    for (int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        mMineInMaze[i] = 1;
+                        mMineArray[i] = mMineGenerator.GetNextMine();
+                    }
+                    mGameStage++;
+                    CarB.mTaskState = 1;
+                    if (FoulTimeFS != null)
+                    {
+                        byte[] data = Encoding.Default.GetBytes($"nextStage\r\n");
+                        FoulTimeFS.Write(data, 0, data.Length);
+                        // 如果不加以下两行的话，数据无法写到文件中
+                        FoulTimeFS.Flush();
+                        //FoulTimeFS.Close();
+                    }
+                    Debug.WriteLine("成功进入下一个stage");
+                }
+            }
+            else if (mGameStage == GameStage.SECOND_B)
+            {
+                if (mGameTime > 120000 / (1 + mIsOverTime))
+                {
+                    mGameState = GameState.UNSTART;
+                    mMineGenerator.Reset();
+                    for (int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        mMineInMaze[i] = 1;
+                        mMineArray[i] = mMineGenerator.GetNextMine();
+                    }
+                    mLastOnBeaconTime = -10;
+                    UpperCamp = Camp.A;
+                    mGameStage++;
+                    if (FoulTimeFS != null)
+                    {
+                        byte[] data = Encoding.Default.GetBytes($"nextStage\r\n");
+                        FoulTimeFS.Write(data, 0, data.Length);
+                        // 如果不加以下两行的话，数据无法写到文件中
+                        FoulTimeFS.Flush();
+                        //FoulTimeFS.Close();
+                    }
+                    Debug.WriteLine("成功进入下一个stage");
+                }
+            }
+            else if (mGameStage == GameStage.SECOND_A)
+            {
+                if (mGameTime > 120000 / (1 + mIsOverTime))
+                {
+                    mGameState = GameState.END;
+                    mMineGenerator.Reset();
+                    for (int i = 0; i < MINE_COUNT_MAX; i++)
+                    {
+                        mMineInMaze[i] = 1;
+                        mMineArray[i] = mMineGenerator.GetNextMine();
+                    }
+                    mLastOnBeaconTime = -10;
+                    mGameStage++;
+                    if (FoulTimeFS != null)
+                    {
+                        byte[] data = Encoding.Default.GetBytes($"end\r\n");
+                        FoulTimeFS.Write(data, 0, data.Length);
+                        // 如果不加以下两行的话，数据无法写到文件中
+                        FoulTimeFS.Flush();
+                        //FoulTimeFS.Close();
+                    }
+                    Debug.WriteLine("比赛结束");
+                }
+            }
+            else
+            {
+                return;
+            }
+        }
+
+
+
+        // Game的更新
+        public void Update()
+        {
+            if (mGameState == GameState.NORMAL)
+            {
+                UpdateGameTime();
+                UpdateMine();
+                if (mGameStage == GameStage.FIRST_A || mGameStage == GameStage.SECOND_A)
+                {
+                    JudgeAIsInField();
+                    JudgeAIsInMaze();
+                    CheckCarAGetMine();
+                    CheckCarAOnBeacon();
+                    CheckCarAUnloadMine();
+                    UpdateCarATransPos();
+                }
+                else if (mGameStage == GameStage.FIRST_B || mGameStage == GameStage.SECOND_B)
+                {
+                    JudgeBIsInField();
                     JudgeBIsInMaze();
-                    CheckCarBGetpackage();
-                    CheckCarBGetPassenger();
-                    CheckCarBonFlood();
-                    CheckCarBonObstacle();
-                    CheckCarBTransPassenger();
-                    //CheckCarBWrongDirection();
-                    Debug.WriteLine("0.1 Update！");
+                    CheckCarBGetMine();
+                    CheckCarBOnBeacon();
+                    CheckCarBUnloadMine();
+                    UpdateCarBTransPos();
                 }
                 CheckNextStage();
-                UpdateCarATransmPos();
-                UpdateCarBTransmPos();
-                Debug.WriteLine("小车位置x{0},y{1}", CarB.mPos.x, CarB.mPos.y);
-                Debug.WriteLine("物资1 x{0} y{1}", currentPkgList[0].mPos.x, currentPkgList[0].mPos.y);
-                Debug.WriteLine("物资2 x{0} y{1}", currentPkgList[1].mPos.x, currentPkgList[1].mPos.y);
-                Debug.WriteLine("物资3 x{0} y{1}", currentPkgList[2].mPos.x, currentPkgList[2].mPos.y);
-                Debug.WriteLine("物资4 x{0} y{1}", currentPkgList[3].mPos.x, currentPkgList[3].mPos.y);
-                Debug.WriteLine("物资5 x{0} y{1}", currentPkgList[4].mPos.x, currentPkgList[4].mPos.y);
-                Debug.WriteLine("物资6 x{0} y{1}", currentPkgList[5].mPos.x, currentPkgList[5].mPos.y);
-                Debug.WriteLine("泄洪口数{0}", mFlood.num) ;
-            }
-        }
-
-        #region 1秒区域
-        public void UpdateCarLastOneSecondPos()
-        {
-            if (gameState == GameState.NORMAL)
-            {
-                CarA.mLastOneSecondPos = CarA.mPos;
-                CarB.mLastOneSecondPos = CarB.mPos;
-                Debug.WriteLine("Update CarPos A位置 x {0}, y {1}, B位置 x {2}, y {3}", CarA.mPos.x, CarA.mPos.y, CarB.mPos.x, CarB.mPos.y);
-            }
-        }
-
-        public void SetFlood()
-        {
-            if (gameStage == GameStage.FIRST_1)
-            {
-                for (int i = 1; i <= 6; i++)
-                {
-
-                    for (int j = 1; j <= 6; j++)
-                    {
-                        if (GetDistance(CarA.mLastOneSecondPos,
-                            new Dot(MAZE_SHORT_BORDER_CM + i * MAZE_CROSS_DIST_CM - 15,
-                            MAZE_CROSS_DIST_CM + j * MAZE_CROSS_DIST_CM - 15)) < COINCIDE_ERR_DIST_CM &&
-                            GetDistance(CarA.mPos,
-                            new Dot(MAZE_SHORT_BORDER_CM + i * MAZE_CROSS_DIST_CM - 15,
-                            MAZE_CROSS_DIST_CM + j * MAZE_CROSS_DIST_CM - 15)) < COINCIDE_ERR_DIST_CM)
-                        {
-                            if (mFlood.num == 0)
-                            {
-                                mFlood.dot1 = new Dot(MAZE_SHORT_BORDER_CM + i * MAZE_CROSS_DIST_CM - 15,
-                            MAZE_CROSS_DIST_CM + j * MAZE_CROSS_DIST_CM - 15);
-                                mFlood.num = 1;
-                                Debug.WriteLine("A 设置了泄洪口 1，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                            }
-                            if (mFlood.num == 1)
-                            {
-                                mFlood.dot2 = new Dot(MAZE_SHORT_BORDER_CM + i * MAZE_CROSS_DIST_CM - 15,
-                                                            MAZE_CROSS_DIST_CM + j * MAZE_CROSS_DIST_CM - 15);
-                                mFlood.num = 2;
-                                Debug.WriteLine("A 设置了泄洪口 2，位置 x {0}, y {1}", CarA.mPos.x, CarA.mPos.y);
-                            }
-                        }
-
-
-                    }
-                }
-
-            }
-            if (gameStage == GameStage.LATTER_1)
-            {
-                for (int i = 1; i <= 6; i++)
-                {
-
-                    for (int j = 1; j <= 6; j++)
-                    {
-                        if (GetDistance(CarB.mLastOneSecondPos,
-                            new Dot(MAZE_SHORT_BORDER_CM + i * MAZE_CROSS_DIST_CM - 15,
-                            MAZE_CROSS_DIST_CM + j * MAZE_CROSS_DIST_CM - 15)) < COINCIDE_ERR_DIST_CM &&
-                            GetDistance(CarB.mPos,
-                            new Dot(MAZE_SHORT_BORDER_CM + i * MAZE_CROSS_DIST_CM - 15,
-                            MAZE_CROSS_DIST_CM + j * MAZE_CROSS_DIST_CM - 15)) < COINCIDE_ERR_DIST_CM)
-                        {
-                            if (mFlood.num == 0)
-                            {
-                                mFlood.dot1 = new Dot(MAZE_SHORT_BORDER_CM + i * MAZE_CROSS_DIST_CM - 15,
-                            MAZE_CROSS_DIST_CM + j * MAZE_CROSS_DIST_CM - 15);
-                                mFlood.num = 1;
-                                Debug.WriteLine("B 设置了泄洪口 1，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                            }
-                            if (mFlood.num == 1)
-                            {
-                                mFlood.dot2 = new Dot(MAZE_SHORT_BORDER_CM + i * MAZE_CROSS_DIST_CM - 15,
-                                                            MAZE_CROSS_DIST_CM + j * MAZE_CROSS_DIST_CM - 15);
-                                mFlood.num = 2;
-                                Debug.WriteLine("B 设置了泄洪口 2，位置 x {0}, y {1}", CarB.mPos.x, CarB.mPos.y);
-                            }
-                        }
-
-                    }
-                }
 
             }
         }
+
         #endregion
-        #region 按键功能函数
-        //点击开始键时调用Start函数 
-        //上半场上一阶段、上半场下一阶段、下半场上一阶段、
-        //下半场下一阶段开始时需要这一函数都需要调用这一函数来开始
-        //暂停不用这个函数开始
-        public void Start() //开始比赛上下半场都用这个
+
+
+        #region 按键触发
+
+        // 开始按键
+        // 开始任意一个stage的比赛
+        public void Start()
         {
-            if (gameState == GameState.UNSTART)
+            if (mGameState == GameState.UNSTART)
             {
-                gameState = GameState.NORMAL;
+                mGameState = GameState.NORMAL;
                 mGameTime = 0;
                 mPrevTime = GetCurrentTime();
                 Debug.WriteLine("start");
             }
         }
 
-        //点击暂停比赛键时调用Pause函数
-        public void Pause() //暂停比赛
+        // 设置信标
+        public void SetBeacon()
         {
-            gameState = GameState.PAUSE;
+            if (mGameState == GameState.END || mGameState == GameState.PAUSE || mGameState == GameState.UNSTART ||
+                mGameStage == GameStage.END || mGameStage == GameStage.SECOND_A || mGameStage == GameStage.SECOND_B)
+            {
+                return;
+            }
+            if (UpperCamp == Camp.A && mGameStage == GameStage.FIRST_A)
+            {
+                if (mBeacon.CarABeaconNum >= mBeacon.MaxBeaconNum)
+                {
+                    return;
+                }
+                if (CarA.mIsInMaze != 1)
+                {
+                    return;
+                }
+                mBeacon.CarAAddBeacon(CarA.mPos);
+                CarA.AddBeaconCount();
+            }
+            else if (UpperCamp == Camp.B && mGameStage == GameStage.FIRST_B)
+            {
+                if (mBeacon.CarBBeaconNum >= mBeacon.MaxBeaconNum)
+                {
+                    return;
+                }
+                if (CarB.mIsInMaze != 1)
+                {
+                    return;
+                }
+                mBeacon.CarBAddBeacon(CarB.mPos);
+                CarB.AddBeaconCount();
+            }
         }
 
-        //半场交换函数自动调用依照时间控制
+        // 暂停按键
+        public void Pause()
+        {
+            mGameState = GameState.PAUSE;
+        }
 
-
-        //在暂停后需要摁下继续按钮来继续比赛
+        // 继续按键
         public void Continue()
         {
-            gameState = GameState.NORMAL;
+            mGameState = GameState.NORMAL;
             mPrevTime = GetCurrentTime();
         }
-        //重置摁键对应的函数
-        //@TODO
+
+        // 重置按键，初始化比赛
+        // 仅在比赛暂停(GameState.PAUSE)或未开始(GameState.UNSTART)或结束(GameState.END)时可以初始化比赛
         public void Reset()
         {
-            //Game = new Game();
+            if (mGameState == GameState.NORMAL)
+            {
+                return;
+            }
+            Debug.WriteLine("初始化比赛");
+            mGameState = GameState.UNSTART;
+            mGameStage = GameStage.FIRST_A;
+            UpperCamp = Camp.A;
+            CarA = new Car(Camp.A, 0);
+            CarB = new Car(Camp.B, 0);
+            mBeacon = new Beacon();
+            mPrevTime = GetCurrentTime();
+            mGameTime = 0;
+            mLastOnBeaconTime = -10;
+            mMineGenerator = new MineGenerator();
+            mParkPoint = Court.ParkID2Dot(mMineGenerator.GetParkPoint());
+            mMineArray = mMineGenerator.GetStage1Mine();
+            mMineInMaze = new int[2];
+            mIsOverTime = 0;
+            for (int i = 0; i < mMineInMaze.Length; i++)
+            {
+                mMineInMaze[i] = 1;
+            }
+            Debug.WriteLine("Game构造函数FIRST_A执行完毕");
         }
+
+        // 进行加时赛
+        // 仅比赛结束(GameState.END)时可以使用
+        public void OverTime()
+        {
+            if (mGameState != GameState.END)
+            {
+                return;
+            }
+            mIsOverTime = 1;
+            mGameStage = GameStage.SECOND_B;
+            mGameState = GameState.UNSTART;
+            mMineGenerator.GenerateStage2(mBeacon);
+            mMineGenerator.Reset();
+            for (int i = 0; i < MINE_COUNT_MAX; i++)
+            {
+                mMineInMaze[i] = 1;
+                mMineArray[i] = mMineGenerator.GetNextMine();
+            }
+            UpperCamp = Camp.B;
+            mPrevTime = GetCurrentTime();
+            mGameTime = 0;
+            mLastOnBeaconTime = -10;
+        }
+
         #endregion
+
+
+        #region 通信（未修改）
+
+
+        // 未修改
         public byte[] PackCarAMessage()//已更新到最新通信协议
         {
             byte[] message = new byte[70]; //上位机传递多少信息
@@ -1311,5 +932,7 @@ namespace EDCHOST22
             message[messageCnt++] = 0x0A;
             return message;
         }
+
+        #endregion
     }
 }

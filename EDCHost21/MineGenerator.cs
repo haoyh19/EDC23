@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace EDCHOST22
 {
+<<<<<<< HEAD
     class MineGenerator    //进行各回合金矿的生成
     {
         public const int COURTMINENUM = 2;       // 同时存在的金矿数
@@ -19,11 +20,27 @@ namespace EDCHOST22
         public Mine[] MineArray2;        // 第二回合金矿数组
         public int Mine_id;              //第二回合金矿取到哪里了
        
+=======
+    public class MineGenerator    //进行各回合金矿的生成
+    {
+        public const int COURTMINENUM = 2;       // 同时存在的金矿数
+        public const int MINELISTNUM = 30;      //第二回合可取用的金矿总数
+
+        public Mine[] MineArray1;        // 第一回合设置金矿的数组
+        public int ParkPoint;            // 第一回合停车点
+        public Mine[] MineArray2;        // 第二回合金矿数组
+        public int Mine_id;              // 第二回合该取下标为Mine_id的金矿了
+
+>>>>>>> 11f15e213afd16e4479a4fb5891e2ded7f34da1c
         public MineGenerator()         // 构造函数
         {
             Mine_id = 0;
 
+<<<<<<< HEAD
             MineArray1 = new Mine[COURTMINENUM]; 
+=======
+            MineArray1 = new Mine[COURTMINENUM];
+>>>>>>> 11f15e213afd16e4479a4fb5891e2ded7f34da1c
             for (int i = 0; i < COURTMINENUM; i++)
             {
                 MineArray1[i] = new Mine();
@@ -58,7 +75,11 @@ namespace EDCHOST22
 
             MineArray1[0] = stage1_mine1;
             MineArray1[1] = stage1_mine2;
+<<<<<<< HEAD
             
+=======
+
+>>>>>>> 11f15e213afd16e4479a4fb5891e2ded7f34da1c
         }
 
         //返回停车点
@@ -77,9 +98,15 @@ namespace EDCHOST22
         public bool MinesApart(Dot mine_xy, int i)
         {
             bool flag = true;
+<<<<<<< HEAD
             for(int j = i >= 4 ? i - 4 : 0; j < i; j++)
             {
                 if(Dot.InCollisionZone(mine_xy, MineArray2[j].Pos, Court.MINE_LOWERDIST_CM))
+=======
+            for (int j = i >= 4 ? i - 4 : 0; j < i; j++)
+            {
+                if (Dot.InCollisionZone(mine_xy, MineArray2[j].Pos, Court.MINE_LOWERDIST_CM))
+>>>>>>> 11f15e213afd16e4479a4fb5891e2ded7f34da1c
                 {
                     flag = false;
                     break;
@@ -99,18 +126,30 @@ namespace EDCHOST22
             {
                 beacon_loc[count++] = beacon.CarABeacon[i];
             }
+<<<<<<< HEAD
             for(int i = 0; i < beacon.CarBBeaconNum; i++)
+=======
+            for (int i = 0; i < beacon.CarBBeaconNum; i++)
+>>>>>>> 11f15e213afd16e4479a4fb5891e2ded7f34da1c
             {
                 beacon_loc[count++] = beacon.CarBBeacon[i];
             }
 
+<<<<<<< HEAD
             for(int i = 0; i < MINELISTNUM; i++)
+=======
+            for (int i = 0; i < MINELISTNUM; i++)
+>>>>>>> 11f15e213afd16e4479a4fb5891e2ded7f34da1c
             {
                 int stage2_mine_x = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
                 int stage2_mine_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
                 int stage2_mine_d = ran.Next(Court.MAX_MINE_DEPTH);
                 Dot stage2_mine_xy = new Dot(stage2_mine_x, stage2_mine_y);
+<<<<<<< HEAD
                 while (!MinesApart(stage2_mine_xy, i) || Dot.InCollisionZones(stage2_mine_xy, beacon_loc, Court.MINE_LOWERDIST_CM))
+=======
+                while (!MinesApart(stage2_mine_xy, i) || Dot.InCollisionZones(stage2_mine_xy, beacon_loc))
+>>>>>>> 11f15e213afd16e4479a4fb5891e2ded7f34da1c
                 {
                     stage2_mine_x = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
                     stage2_mine_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
@@ -133,4 +172,8 @@ namespace EDCHOST22
             Mine_id = 0;
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 11f15e213afd16e4479a4fb5891e2ded7f34da1c
