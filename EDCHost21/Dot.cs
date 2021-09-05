@@ -50,15 +50,6 @@ namespace EDCHOST22
         // dist参数含义同上
         public static bool InCollisionZones(Dot d, Dot[] dArray, int dist = Court.COINCIDE_ERR_DIST_CM)   
         {
-            /*
-            bool ret = false;
-            foreach(Dot temp in dArray)
-            {
-                ret = InCollisionZone(d, temp, dist);
-            }
-            //ret判断每一个dArray中Dot与d的距离，结束循环后ret的值总是dArray中最后一个点的结果
-            return ret;
-            */
             foreach(Dot temp in dArray)
             {
                 if(InCollisionZone(d, temp, dist))//有一个点满足条件即可返回true
