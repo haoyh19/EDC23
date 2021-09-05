@@ -46,16 +46,28 @@ namespace EDCHOST22
             return GetDistance(d1, d2) < dist;
         }
 
-        // 判断d是否与dArray中的任何一个点的间距小于某定值dist
+        // 判断d是否与dArray中的某一个点的间距小于某定值dist
         // dist参数含义同上
         public static bool InCollisionZones(Dot d, Dot[] dArray, int dist = Court.COINCIDE_ERR_DIST_CM)   
         {
+            /*
             bool ret = false;
             foreach(Dot temp in dArray)
             {
                 ret = InCollisionZone(d, temp, dist);
             }
+            //ret判断每一个dArray中Dot与d的距离，结束循环后ret的值总是dArray中最后一个点的结果
             return ret;
+            */
+            foreach(Dot temp in dArray)
+            {
+                if(InCollisionZone(d, temp, dist))//有一个点满足条件即可返回true
+                {
+                    return true;
+                }
+            }
+            //每个点均不满足则返回false
+            return false;
         }
 
     }
