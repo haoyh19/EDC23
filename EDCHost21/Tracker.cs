@@ -793,17 +793,25 @@ namespace EDCHOST22
             game.mGameTime = 200000;
             game.CheckNextStage();
             game.mGameTime = 0;
+            buttonStart.Enabled = true;
+            button_Continue.Enabled = false;
+            buttonPause.Enabled = false;
         }
 
         private void LastStage_Click(object sender, EventArgs e)
         {
             game.mGameTime = 0;
             game.mGameStage--;
+            buttonStart.Enabled = true;
+            button_Continue.Enabled = false;
+            buttonPause.Enabled = false;
         }
 
 
-        #endregion
 
+
+
+        #endregion
 
         #region 由定时器控制的函数，已完成修改
 
