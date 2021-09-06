@@ -46,13 +46,13 @@ namespace EDCHOST22
 
             int stage1_mine2_x = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
             int stage1_mine2_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
-            Dot stage1_mine2_xy = new Dot(stage1_mine1_x, stage1_mine1_y);
+            Dot stage1_mine2_xy = new Dot(stage1_mine2_x, stage1_mine2_y);
             int stage1_mine2_d = ran.Next(Court.MAX_MINE_DEPTH);
             while (Dot.InCollisionZone(stage1_mine1_xy, stage1_mine2_xy, Court.MINE_LOWERDIST_CM))
             {
                 stage1_mine2_x = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
                 stage1_mine2_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
-                stage1_mine2_xy = new Dot(stage1_mine1_x, stage1_mine1_y);
+                stage1_mine2_xy = new Dot(stage1_mine2_x, stage1_mine2_y);
             }
             Mine stage1_mine2 = new Mine(stage1_mine2_xy, stage1_mine2_d);
 
