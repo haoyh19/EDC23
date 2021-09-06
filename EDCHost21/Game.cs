@@ -226,14 +226,17 @@ namespace EDCHOST22
                 if (mGameStage == GameStage.FIRST_A)
                 {
                     CarA.mTransPos = CarA.mPos;
+                    CarA.mRightPos = 1;
                 }
                 else if (mGameStage == GameStage.SECOND_A && CarA.mIsInMaze != 1)
                 {
                     CarA.mTransPos = CarA.mPos;
+                    CarA.mRightPos = 1;
                 }
                 else
                 {
                     CarA.mTransPos.SetInfo(-10, -10);
+                    CarA.mRightPos = 0;
                 }
             }
         }
@@ -244,14 +247,17 @@ namespace EDCHOST22
                 if (mGameStage == GameStage.FIRST_B)
                 {
                     CarB.mTransPos = CarB.mPos;
+                    CarB.mRightPos = 1;
                 }
                 else if (mGameStage == GameStage.SECOND_B && CarB.mIsInMaze != 1)
                 {
                     CarB.mTransPos = CarB.mPos;
+                    CarB.mRightPos = 1;
                 }
                 else
                 {
                     CarB.mTransPos.SetInfo(-10, -10);
+                    CarB.mRightPos = 0;
                 }
             }
         }
