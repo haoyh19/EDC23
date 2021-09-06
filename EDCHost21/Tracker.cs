@@ -637,11 +637,11 @@ namespace EDCHOST22
             labelAScore.Text = $"{game.CarA.MyScore}";
             labelBScore.Text = $"{game.CarB.MyScore}";
 
-            // 上半场或下半场
-            label_GameCount.Text = (game.gameStage == GameStage.FIRST_1 || game.gameStage == GameStage.FIRST_2) ? "上半场" : "下半场";
+            // 第一回合或第二回合
+            label_GameCount.Text = (game.mGameStage == GameStage.FIRST_A || game.mGameStage == GameStage.FIRST_B) ? "第一回合" : "第二回合";
 
-            // 阶段一或阶段二
-            label_GameStage.Text = (game.gameStage == GameStage.FIRST_1 || game.gameStage == GameStage.LATTER_1) ? "阶段一" : "阶段二";
+            // A上场或B上场
+            label_GameStage.Text = (game.mGameStage == GameStage.FIRST_A || game.mGameStage == GameStage.SECOND_A) ? "A上场" : "B上场";
 
             // A,B车犯规的次数
             label_AFoulNum.Text = $"{game.CarA.mFoulCount}";
@@ -649,11 +649,11 @@ namespace EDCHOST22
 
             // A,B车的得分明细
             label_AMessage.Text =
-                $"转移被困人员数　　{game.CarA.mRescueCount}\n" +
-                $"获得防汛物资数　　{game.CarA.mPkgCount}\n";
+                $"收集金矿数　　{game.CarA.mMine1Load} + {game.CarA.mMine2Load}\n" +
+                $"成功运送次数　　{game.CarA.mMine1Unload} + {game.CarA.mMine2Unload}\n";
             label_BMessage.Text =
-                $"{game.CarB.mRescueCount}　　转移被困人员数\n" +
-                $"{game.CarB.mPkgCount}　　获得防汛物资数\n";
+                $"{game.CarB.mMine1Load} + {game.CarB.mMine2Load}　　收集金矿数\n" +
+                $"{game.CarB.mMine1Unload} + {game.CarB.mMine2Unload}　　获得防汛物资数\n";
 
             // A,B车的坐标信息
             label_Debug.Text =
@@ -663,11 +663,9 @@ namespace EDCHOST22
             //比赛时间信息
             time.Text = $"比赛时间： ({game.mGameTime/1000})\n";
 
-            AWall.Text = $"A撞到虚拟障碍物数　　{game.CarA.mCrossWallCount}\n";
-            BWall.Text = $"B撞到虚拟障碍物数　　{game.CarB.mCrossWallCount}\n";
 
-            ABeacon.Text = $"A撞到隔离区数　　{game.CarA.mCrossFloodCount}\n";
-            BBeacon.Text = $"B撞到隔离区数　　{game.CarB.mCrossFloodCount}\n";
+            ABeacon.Text = $"A撞到信标数　　{game.CarA.mCrossBeaconCount}\n";
+            BBeacon.Text = $"B撞到信标数　　{game.CarB.mCrossBeaconCount}\n";
 
         }
 
