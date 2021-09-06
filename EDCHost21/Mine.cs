@@ -9,7 +9,7 @@ namespace EDCHOST22
     public class Mine      // 此类第一回合、第二回合通用，两个回合中用同一个MineGenerator生成矿
     {
         
-        public const double A = 100;    // 金矿强度值计算参数
+        public const int A = 1000000000;    // 金矿强度值计算参数
         public Dot Pos;       // 金矿初始位置
         public int Depth;           // 金矿初始深度
 
@@ -37,10 +37,12 @@ namespace EDCHOST22
 
         
         // 获取某金矿对任意点处的强度
-        static public double GetIntensity(Mine m, Dot d)
+        static public int GetIntensity(Mine m, Dot d)
         {
-            return A / (Math.Pow(m.Depth, 2) + Math.Pow(m.Pos.x - d.x, 2) + Math.Pow(m.Pos.y - d.y, 2));
+            int depth = m.Depth < 1 ? 1 : m.Depth;
+            int delta_x = Math.Abs(m.Pos.x - d.x) < 1 ? 1 : Math.Abs(m.Pos.x - d.x);
+            int delta_y = Math.Abs(m.Pos.y - d.y) < 1 ? 1 : Math.Abs(m.Pos.y - d.y);
+            return Convert.ToInt32(A * 1.0 / (Math.Pow(depth, 2) + Math.Pow(delta_x, 2) + Math.Pow(delta_y, 2)));
         }
-
     }
 }
