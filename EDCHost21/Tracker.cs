@@ -444,16 +444,20 @@ namespace EDCHOST22
             // 绘制金矿位置
             if (game.mGameState == GameState.NORMAL)
             {
-                Point2f[] logicMineDots = new Point2f[MineGenerator.COURTMINENUM];
+                Point2f[] logicMineDots = new Point2f[game.mMineInMaze[0] + game.mMineInMaze[1]];
+                int temp = 0;
                 for (int i = 0; i < MineGenerator.COURTMINENUM; i++)
                 {
-                    logicMineDots[i] = Cvt.Dot2Point(game.mMineArray[i].Pos);
+                    if (game.mMineInMaze[i] == 1)
+                    {
+                        logicMineDots[temp++] = Cvt.Dot2Point(game.mMineArray[i].Pos);
+                    }
                 }
-                for (int i = 0; i < MineGenerator.COURTMINENUM; i++)
+                Point2f[] showMineDots = coordCvt.LogicToCamera(logicMineDots);
+                for (int i = 0; i < game.mMineInMaze[0] + game.mMineInMaze[1]; i++)
                 {
                     if (flags.calibrated)
                     {
-                        Point2f[] showMineDots = coordCvt.LogicToCamera(logicMineDots);
                         int x = (int)showMineDots[i].X;
                         int y = (int)showMineDots[i].Y;
                         int Tx = x - 10, Ty = y - 10, Tcol = Icon_Mine.Cols, Trow = Icon_Mine.Rows;
@@ -496,11 +500,11 @@ namespace EDCHOST22
                     {
                         logicBeaconADots[i] = Cvt.Dot2Point(game.mBeacon.CarABeacon[i]);
                     }
+                    Point2f[] showBeaconADots = coordCvt.LogicToCamera(logicBeaconADots);
                     for (int i = 0; i < game.mBeacon.CarABeaconNum; i++)
                     {
                         if (flags.calibrated)
                         {
-                            Point2f[] showBeaconADots = coordCvt.LogicToCamera(logicBeaconADots);
                             int x = (int)showBeaconADots[i].X;
                             int y = (int)showBeaconADots[i].Y;
                             int Tx = x - 10, Ty = y - 10, Tcol = Icon_BeaconA.Cols, Trow = Icon_BeaconA.Rows;
@@ -520,11 +524,11 @@ namespace EDCHOST22
                     {
                         logicBeaconBDots[i] = Cvt.Dot2Point(game.mBeacon.CarBBeacon[i]);
                     }
+                    Point2f[] showBeaconBDots = coordCvt.LogicToCamera(logicBeaconBDots);
                     for (int i = 0; i < game.mBeacon.CarBBeaconNum; i++)
                     {
                         if (flags.calibrated)
                         {
-                            Point2f[] showBeaconBDots = coordCvt.LogicToCamera(logicBeaconBDots);
                             int x = (int)showBeaconBDots[i].X;
                             int y = (int)showBeaconBDots[i].Y;
                             int Tx = x - 10, Ty = y - 10, Tcol = Icon_BeaconB.Cols, Trow = Icon_BeaconB.Rows;
@@ -806,10 +810,6 @@ namespace EDCHOST22
             button_Continue.Enabled = false;
             buttonPause.Enabled = false;
         }
-
-
-
-
 
         #endregion
 
