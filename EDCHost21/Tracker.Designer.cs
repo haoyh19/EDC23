@@ -56,16 +56,13 @@
             this.label_GameCount = new System.Windows.Forms.Label();
             this.label_GameStage = new System.Windows.Forms.Label();
             this.time = new System.Windows.Forms.Label();
-            this.AWall = new System.Windows.Forms.Label();
-            this.BWall = new System.Windows.Forms.Label();
-            this.AFlood = new System.Windows.Forms.Label();
-            this.BFlood = new System.Windows.Forms.Label();
-            this.SetFlood = new System.Windows.Forms.Button();
+            this.ABeacon = new System.Windows.Forms.Label();
+            this.BBeacon = new System.Windows.Forms.Label();
+            this.SetBeacon = new System.Windows.Forms.Button();
             this.NextStage = new System.Windows.Forms.Button();
             this.label_BlueBG = new System.Windows.Forms.Label();
             this.LastStage = new System.Windows.Forms.Button();
-            this.CarGetIn = new System.Windows.Forms.Button();
-            this.GetOut = new System.Windows.Forms.Button();
+            this.buttonOverTime = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pbCamera)).BeginInit();
             this.SuspendLayout();
             // 
@@ -83,7 +80,7 @@
             // 
             this.btnReset.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnReset.Font = new System.Drawing.Font("微软雅黑 Light", 28F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.btnReset.Location = new System.Drawing.Point(41, 509);
+            this.btnReset.Location = new System.Drawing.Point(41, 556);
             this.btnReset.Margin = new System.Windows.Forms.Padding(2);
             this.btnReset.Name = "btnReset";
             this.btnReset.Size = new System.Drawing.Size(250, 60);
@@ -97,7 +94,7 @@
             this.buttonStart.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonStart.Font = new System.Drawing.Font("微软雅黑 Light", 28F);
             this.buttonStart.ForeColor = System.Drawing.Color.Green;
-            this.buttonStart.Location = new System.Drawing.Point(1543, 556);
+            this.buttonStart.Location = new System.Drawing.Point(1543, 661);
             this.buttonStart.Margin = new System.Windows.Forms.Padding(2);
             this.buttonStart.Name = "buttonStart";
             this.buttonStart.Size = new System.Drawing.Size(250, 60);
@@ -111,7 +108,7 @@
             this.buttonPause.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonPause.Font = new System.Drawing.Font("微软雅黑 Light", 28F);
             this.buttonPause.ForeColor = System.Drawing.Color.Green;
-            this.buttonPause.Location = new System.Drawing.Point(1543, 746);
+            this.buttonPause.Location = new System.Drawing.Point(1543, 834);
             this.buttonPause.Margin = new System.Windows.Forms.Padding(2);
             this.buttonPause.Name = "buttonPause";
             this.buttonPause.Size = new System.Drawing.Size(250, 60);
@@ -164,7 +161,7 @@
             this.button_video.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_video.Font = new System.Drawing.Font("微软雅黑 Light", 28F);
             this.button_video.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.button_video.Location = new System.Drawing.Point(41, 418);
+            this.button_video.Location = new System.Drawing.Point(41, 458);
             this.button_video.Margin = new System.Windows.Forms.Padding(2);
             this.button_video.Name = "button_video";
             this.button_video.Size = new System.Drawing.Size(250, 60);
@@ -177,7 +174,7 @@
             // 
             this.button_set.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_set.Font = new System.Drawing.Font("微软雅黑 Light", 28F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.button_set.Location = new System.Drawing.Point(41, 598);
+            this.button_set.Location = new System.Drawing.Point(41, 661);
             this.button_set.Margin = new System.Windows.Forms.Padding(2);
             this.button_set.Name = "button_set";
             this.button_set.Size = new System.Drawing.Size(250, 60);
@@ -220,7 +217,7 @@
             this.label1.Location = new System.Drawing.Point(948, 26);
             this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(33, 52);
+            this.label1.Size = new System.Drawing.Size(32, 52);
             this.label1.TabIndex = 79;
             this.label1.Text = ":";
             // 
@@ -272,7 +269,7 @@
             this.button_Continue.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_Continue.Font = new System.Drawing.Font("微软雅黑 Light", 28F);
             this.button_Continue.ForeColor = System.Drawing.Color.Green;
-            this.button_Continue.Location = new System.Drawing.Point(1543, 661);
+            this.button_Continue.Location = new System.Drawing.Point(1543, 746);
             this.button_Continue.Margin = new System.Windows.Forms.Padding(2);
             this.button_Continue.Name = "button_Continue";
             this.button_Continue.Size = new System.Drawing.Size(250, 60);
@@ -373,65 +370,44 @@
             this.time.Text = "label2";
             this.time.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // AWall
+            // ABeacon
             // 
-            this.AWall.AutoSize = true;
-            this.AWall.Font = new System.Drawing.Font("宋体", 27.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.AWall.Location = new System.Drawing.Point(12, 178);
-            this.AWall.Name = "AWall";
-            this.AWall.Size = new System.Drawing.Size(131, 37);
-            this.AWall.TabIndex = 113;
-            this.AWall.Text = "label2";
+            this.ABeacon.AutoSize = true;
+            this.ABeacon.Font = new System.Drawing.Font("宋体", 27.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.ABeacon.Location = new System.Drawing.Point(12, 219);
+            this.ABeacon.Name = "ABeacon";
+            this.ABeacon.Size = new System.Drawing.Size(131, 37);
+            this.ABeacon.TabIndex = 115;
+            this.ABeacon.Text = "label2";
             // 
-            // BWall
+            // BBeacon
             // 
-            this.BWall.AutoSize = true;
-            this.BWall.Font = new System.Drawing.Font("宋体", 27.75F);
-            this.BWall.Location = new System.Drawing.Point(1489, 178);
-            this.BWall.Name = "BWall";
-            this.BWall.Size = new System.Drawing.Size(131, 37);
-            this.BWall.TabIndex = 114;
-            this.BWall.Text = "label3";
+            this.BBeacon.AutoSize = true;
+            this.BBeacon.Font = new System.Drawing.Font("宋体", 27.75F);
+            this.BBeacon.Location = new System.Drawing.Point(1489, 219);
+            this.BBeacon.Name = "BBeacon";
+            this.BBeacon.Size = new System.Drawing.Size(131, 37);
+            this.BBeacon.TabIndex = 116;
+            this.BBeacon.Text = "label2";
             // 
-            // AFlood
+            // SetBeacon
             // 
-            this.AFlood.AutoSize = true;
-            this.AFlood.Font = new System.Drawing.Font("宋体", 27.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.AFlood.Location = new System.Drawing.Point(12, 247);
-            this.AFlood.Name = "AFlood";
-            this.AFlood.Size = new System.Drawing.Size(131, 37);
-            this.AFlood.TabIndex = 115;
-            this.AFlood.Text = "label2";
-            // 
-            // BFlood
-            // 
-            this.BFlood.AutoSize = true;
-            this.BFlood.Font = new System.Drawing.Font("宋体", 27.75F);
-            this.BFlood.Location = new System.Drawing.Point(1492, 238);
-            this.BFlood.Name = "BFlood";
-            this.BFlood.Size = new System.Drawing.Size(131, 37);
-            this.BFlood.TabIndex = 116;
-            this.BFlood.Text = "label2";
-            // 
-            // SetFlood
-            // 
-            this.SetFlood.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.SetFlood.Font = new System.Drawing.Font("微软雅黑 Light", 28F);
-            this.SetFlood.ForeColor = System.Drawing.Color.Green;
-            this.SetFlood.Location = new System.Drawing.Point(1543, 851);
-            this.SetFlood.Margin = new System.Windows.Forms.Padding(2);
-            this.SetFlood.Name = "SetFlood";
-            this.SetFlood.Size = new System.Drawing.Size(250, 60);
-            this.SetFlood.TabIndex = 117;
-            this.SetFlood.Text = "设置隔离区";
-            this.SetFlood.UseVisualStyleBackColor = true;
-            this.SetFlood.Click += new System.EventHandler(this.SetFlood_Click);
+            this.SetBeacon.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.SetBeacon.Font = new System.Drawing.Font("微软雅黑 Light", 28F);
+            this.SetBeacon.ForeColor = System.Drawing.Color.Black;
+            this.SetBeacon.Location = new System.Drawing.Point(41, 746);
+            this.SetBeacon.Margin = new System.Windows.Forms.Padding(2);
+            this.SetBeacon.Name = "SetBeacon";
+            this.SetBeacon.Size = new System.Drawing.Size(250, 60);
+            this.SetBeacon.TabIndex = 117;
+            this.SetBeacon.Text = "设置信标";
+            this.SetBeacon.UseVisualStyleBackColor = true;
             // 
             // NextStage
             // 
             this.NextStage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.NextStage.Font = new System.Drawing.Font("微软雅黑 Light", 28F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.NextStage.Location = new System.Drawing.Point(41, 685);
+            this.NextStage.Location = new System.Drawing.Point(1137, 119);
             this.NextStage.Margin = new System.Windows.Forms.Padding(2);
             this.NextStage.Name = "NextStage";
             this.NextStage.Size = new System.Drawing.Size(250, 60);
@@ -454,7 +430,7 @@
             // 
             this.LastStage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.LastStage.Font = new System.Drawing.Font("微软雅黑 Light", 28F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.LastStage.Location = new System.Drawing.Point(41, 776);
+            this.LastStage.Location = new System.Drawing.Point(539, 119);
             this.LastStage.Margin = new System.Windows.Forms.Padding(2);
             this.LastStage.Name = "LastStage";
             this.LastStage.Size = new System.Drawing.Size(250, 60);
@@ -463,34 +439,18 @@
             this.LastStage.UseVisualStyleBackColor = true;
             this.LastStage.Click += new System.EventHandler(this.LastStage_Click);
             // 
-            // CarGetIn
+            // buttonOverTime
             // 
-            this.CarGetIn.BackColor = System.Drawing.Color.WhiteSmoke;
-            this.CarGetIn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.CarGetIn.Font = new System.Drawing.Font("微软雅黑 Light", 28F);
-            this.CarGetIn.ForeColor = System.Drawing.Color.Green;
-            this.CarGetIn.Location = new System.Drawing.Point(450, 119);
-            this.CarGetIn.Margin = new System.Windows.Forms.Padding(2);
-            this.CarGetIn.Name = "CarGetIn";
-            this.CarGetIn.Size = new System.Drawing.Size(250, 60);
-            this.CarGetIn.TabIndex = 120;
-            this.CarGetIn.Text = "进迷宫加分";
-            this.CarGetIn.UseVisualStyleBackColor = false;
-            this.CarGetIn.Click += new System.EventHandler(this.CarGetIn_Click);
-            // 
-            // GetOut
-            // 
-            this.GetOut.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.GetOut.Font = new System.Drawing.Font("微软雅黑 Light", 28F);
-            this.GetOut.ForeColor = System.Drawing.Color.Green;
-            this.GetOut.Location = new System.Drawing.Point(1220, 115);
-            this.GetOut.Margin = new System.Windows.Forms.Padding(2);
-            this.GetOut.Name = "GetOut";
-            this.GetOut.Size = new System.Drawing.Size(250, 60);
-            this.GetOut.TabIndex = 121;
-            this.GetOut.Text = "回起点加分";
-            this.GetOut.UseVisualStyleBackColor = true;
-            this.GetOut.Click += new System.EventHandler(this.GetOut_Click);
+            this.buttonOverTime.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.buttonOverTime.Font = new System.Drawing.Font("微软雅黑 Light", 28F);
+            this.buttonOverTime.ForeColor = System.Drawing.Color.Green;
+            this.buttonOverTime.Location = new System.Drawing.Point(1543, 556);
+            this.buttonOverTime.Margin = new System.Windows.Forms.Padding(2);
+            this.buttonOverTime.Name = "buttonOverTime";
+            this.buttonOverTime.Size = new System.Drawing.Size(250, 60);
+            this.buttonOverTime.TabIndex = 120;
+            this.buttonOverTime.Text = "加时赛";
+            this.buttonOverTime.UseVisualStyleBackColor = true;
             // 
             // Tracker
             // 
@@ -498,15 +458,12 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.BackColor = System.Drawing.SystemColors.Window;
             this.ClientSize = new System.Drawing.Size(1904, 1041);
-            this.Controls.Add(this.GetOut);
-            this.Controls.Add(this.CarGetIn);
+            this.Controls.Add(this.buttonOverTime);
             this.Controls.Add(this.LastStage);
             this.Controls.Add(this.NextStage);
-            this.Controls.Add(this.SetFlood);
-            this.Controls.Add(this.BFlood);
-            this.Controls.Add(this.AFlood);
-            this.Controls.Add(this.BWall);
-            this.Controls.Add(this.AWall);
+            this.Controls.Add(this.SetBeacon);
+            this.Controls.Add(this.BBeacon);
+            this.Controls.Add(this.ABeacon);
             this.Controls.Add(this.time);
             this.Controls.Add(this.label_GameStage);
             this.Controls.Add(this.label_GameCount);
@@ -570,16 +527,13 @@
         private System.Windows.Forms.Label label_GameCount;
         private System.Windows.Forms.Label label_GameStage;
         private System.Windows.Forms.Label time;
-        private System.Windows.Forms.Label AWall;
-        private System.Windows.Forms.Label BWall;
-        private System.Windows.Forms.Label AFlood;
-        private System.Windows.Forms.Label BFlood;
-        private System.Windows.Forms.Button SetFlood;
+        private System.Windows.Forms.Label ABeacon;
+        private System.Windows.Forms.Label BBeacon;
+        private System.Windows.Forms.Button SetBeacon;
         private System.Windows.Forms.Button NextStage;
         private System.Windows.Forms.Label label_BlueBG;
         private System.Windows.Forms.Button LastStage;
-        private System.Windows.Forms.Button CarGetIn;
-        private System.Windows.Forms.Button GetOut;
+        private System.Windows.Forms.Button buttonOverTime;
     }
 }
 
