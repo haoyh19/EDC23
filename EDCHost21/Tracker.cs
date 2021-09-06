@@ -39,24 +39,32 @@ namespace EDCHOST22
 
         // 以下坐标均为相机坐标
         // 人员坐标
-        private Point2i camPsgStart;
-        private Point2i camPsgEnd;
+        // private Point2i camPsgStart;
+        // private Point2i camPsgEnd;
+        // 金矿坐标
+        private Point2i[] camMine;
+        private Point2i camParkingPoint;
         // 车A坐标
         private Point2i camCarA;
         // 车B坐标
         private Point2i camCarB;
         // 物资坐标
-        private Point2i[] camPkgs;
+        // private Point2i[] camPkgs;
 
         // 以下坐标均为逻辑坐标
-        private Point2i logicPsgStart;
-        private Point2i logicPsgEnd;
+        //private Point2i logicPsgStart;
+        //private Point2i logicPsgEnd;
+        private Point2i[] logicMine;
+        private Point2i logicParkingPoint;
         private Point2i logicCarA;
         private Point2i logicCarB;
-        private Point2i[] logicPkgs;
+        //private Point2i[] logicPkgs;
 
         //以下为物资的坐标显示
-        private int[] PkgsWhetherPicked;
+        //private int[] PkgsWhetherPicked;
+        //以下为金矿的坐标显示
+        private int[] MineIsInMaze;
+        
 
         // 以下均为显示坐标
         private Point2i showCarA;
@@ -94,7 +102,7 @@ namespace EDCHOST22
             newX = labelBScore.Location.X - label_BlueBG.Location.X;
             newY = labelBScore.Location.Y - label_BlueBG.Location.Y;
             labelBScore.Location = new System.Drawing.Point(newX, newY);
-            label_GameCount.Text = "上半场";
+            label_GameCount.Text = "第一回合";
 
             //flags参数类
             flags = new MyFlags();
@@ -127,20 +135,26 @@ namespace EDCHOST22
             timeCamPrev = timeCamNow;
 
             // 相机坐标初始化
-            camPsgStart = new Point2i();
-            camPsgEnd = new Point2i();
+            //camPsgStart = new Point2i();
+            //camPsgEnd = new Point2i();
             camCarA = new Point2i();
             camCarB = new Point2i();
-            camPkgs = new Point2i[0];
+            camMine = new Point2i[2];
+            camParkingPoint = new Point2i();
+            //camPkgs = new Point2i[0];
 
             // 逻辑坐标初始化
-            logicPsgStart = new Point2i();
-            logicPsgEnd = new Point2i();
+            //logicPsgStart = new Point2i();
+            //logicPsgEnd = new Point2i();
+            logicMine = new Point2i[2];
+            logicParkingPoint = new Point2i();
             logicCarA = new Point2i();
             logicCarB = new Point2i();
-            logicPkgs = new Point2i[6];
+            //logicPkgs = new Point2i[6];
             //物资信息初始化
-            PkgsWhetherPicked = new int[6];
+            //PkgsWhetherPicked = new int[6];
+            MineIsInMaze = new int[2] { 1, 1 };
+
 
             // 显示坐标初始化
             showCarA = new Point2i();
@@ -149,6 +163,7 @@ namespace EDCHOST22
             buttonStart.Enabled = true;
             buttonPause.Enabled = false;
             button_Continue.Enabled = false;
+            
 
             validPorts = SerialPort.GetPortNames();
             alreadySet = false;
@@ -178,7 +193,7 @@ namespace EDCHOST22
         private void Flush()
         {
             // 从 labyrinth 目录下读取所有障碍物文件
-            game.mLabyrinth.GetLabyName();
+            //game.mLabyrinth.GetLabyName();
 
             // 如果还未进行参数设置，则创建并打开SetWindow窗口，进行参数设置
             if (!alreadySet)
@@ -203,20 +218,25 @@ namespace EDCHOST22
             game.Update();
 
             // 图像处理端接收游戏逻辑端信息
-            logicPsgStart = Cvt.Dot2Point(game.curPsg.Start_Dot);
-            logicPsgEnd = Cvt.Dot2Point(game.curPsg.End_Dot);
-            logicPkgs[0] = Cvt.Dot2Point(game.currentPkgList[0].mPos);
-            logicPkgs[1] = Cvt.Dot2Point(game.currentPkgList[1].mPos);
-            logicPkgs[2] = Cvt.Dot2Point(game.currentPkgList[2].mPos);
-            logicPkgs[3] = Cvt.Dot2Point(game.currentPkgList[3].mPos);
-            logicPkgs[4] = Cvt.Dot2Point(game.currentPkgList[4].mPos);
-            logicPkgs[5] = Cvt.Dot2Point(game.currentPkgList[5].mPos);
-            PkgsWhetherPicked[0] = game.currentPkgList[0].IsPicked;
-            PkgsWhetherPicked[1] = game.currentPkgList[1].IsPicked;
-            PkgsWhetherPicked[2] = game.currentPkgList[2].IsPicked;
-            PkgsWhetherPicked[3] = game.currentPkgList[3].IsPicked;
-            PkgsWhetherPicked[4] = game.currentPkgList[4].IsPicked;
-            PkgsWhetherPicked[5] = game.currentPkgList[5].IsPicked;
+            //logicPsgStart = Cvt.Dot2Point(game.curPsg.Start_Dot);
+            //logicPsgEnd = Cvt.Dot2Point(game.curPsg.End_Dot);
+            //logicPkgs[0] = Cvt.Dot2Point(game.currentPkgList[0].mPos);
+            //logicPkgs[1] = Cvt.Dot2Point(game.currentPkgList[1].mPos);
+            //logicPkgs[2] = Cvt.Dot2Point(game.currentPkgList[2].mPos);
+            //logicPkgs[3] = Cvt.Dot2Point(game.currentPkgList[3].mPos);
+            //logicPkgs[4] = Cvt.Dot2Point(game.currentPkgList[4].mPos);
+            //logicPkgs[5] = Cvt.Dot2Point(game.currentPkgList[5].mPos);
+            //PkgsWhetherPicked[0] = game.currentPkgList[0].IsPicked;
+            //PkgsWhetherPicked[1] = game.currentPkgList[1].IsPicked;
+            //PkgsWhetherPicked[2] = game.currentPkgList[2].IsPicked;
+            //PkgsWhetherPicked[3] = game.currentPkgList[3].IsPicked;
+            //PkgsWhetherPicked[4] = game.currentPkgList[4].IsPicked;
+            //PkgsWhetherPicked[5] = game.currentPkgList[5].IsPicked;
+            logicParkingPoint = Cvt.Dot2Point(game.mParkPoint);
+            logicMine[0] = Cvt.Dot2Point(game.mMineArray[0].Pos);
+            logicMine[1] = Cvt.Dot2Point(game.mMineArray[1].Pos);
+            MineIsInMaze[0] = game.mMineInMaze[0];
+            MineIsInMaze[1] = game.mMineInMaze[1];
         }
 
         // 当Tracker被加载时调用此函数
@@ -246,7 +266,7 @@ namespace EDCHOST22
         }
 
 
-        #region 向小车传送信息
+        #region 向小车传送信息，不需要改
         // 给小车A发送信息
         private void SendCarAMessage()
         {
@@ -646,15 +666,15 @@ namespace EDCHOST22
             AWall.Text = $"A撞到虚拟障碍物数　　{game.CarA.mCrossWallCount}\n";
             BWall.Text = $"B撞到虚拟障碍物数　　{game.CarB.mCrossWallCount}\n";
 
-            AFlood.Text = $"A撞到隔离区数　　{game.CarA.mCrossFloodCount}\n";
-            BFlood.Text = $"B撞到隔离区数　　{game.CarB.mCrossFloodCount}\n";
+            ABeacon.Text = $"A撞到隔离区数　　{game.CarA.mCrossFloodCount}\n";
+            BBeacon.Text = $"B撞到隔离区数　　{game.CarB.mCrossFloodCount}\n";
 
         }
 
         #endregion
 
 
-        #region 与界面控件有关的函数
+        #region 与界面控件有关的函数，已完成修改
 
         // 当Tracker界面被关闭时，处理一些接口的关闭
         private void Tracker_FormClosed(object sender, FormClosedEventArgs e)
@@ -734,9 +754,11 @@ namespace EDCHOST22
         {
             game.Start();
             buttonPause.Enabled = true;
-            if(game.gameStage==GameStage.LATTER_1||game.gameStage==GameStage.FIRST_1)
+            button_Continue.Enabled = false;
+            if (game.mGameStage==GameStage.FIRST_A)
             {
-                game.mFlood.num = 0;
+                game.mBeacon.CarABeaconNum = 0;
+                game.mBeacon.CarBBeaconNum = 0;
             }
         }
 
@@ -752,14 +774,20 @@ namespace EDCHOST22
         // 比赛重新开始
         private void button_restart_Click(object sender, EventArgs e)
         {
-            string record = game.mLabyrinth.FileNameNow;
             lock (game) { game = new Game(); }
-            game.mLabyrinth.ReadFromFile(record);
             buttonStart.Enabled = true;
             button_Continue.Enabled = false;
             buttonPause.Enabled = false;
             label_CarA.Text = "A车";
             label_CarB.Text = "B车";
+        }
+
+        private void buttonOverTime_Click(object sender, EventArgs e)
+        {
+            game.OverTime();
+            buttonStart.Enabled = true;
+            button_Continue.Enabled = false;
+            buttonPause.Enabled = false;
         }
 
         // 开始录像
@@ -805,6 +833,8 @@ namespace EDCHOST22
             //if (game.state == GameState.End)
             game.Continue();
             buttonPause.Enabled = true;
+            buttonStart.Enabled = false;
+            button_Continue.Enabled = false;
         }
         // A车记1次犯规
         private void button_AFoul_Click(object sender, EventArgs e)
@@ -836,27 +866,9 @@ namespace EDCHOST22
                 //game.FoulTimeFS.Close();
             }
         }
-
-
-        #endregion
-
-
-        #region 由定时器控制的函数
-        //计时器事件，每100ms触发一次，向小车发送信息
-        private void timerMsg100ms_Tick(object sender, EventArgs e)
+        private void SetBeacon_Click(object sender, EventArgs e)
         {
-            Flush();
-            // 如果A车在场地内且在迷宫外
-            SendCarAMessage();
-            // 如果B车在场地内且在迷宫外
-            SendCarBMessage();
-            //更新界面
-            SetWindowSize();
-        }
-
-        private void SetFlood_Click(object sender, EventArgs e)
-        {
-            game.SetFloodArea();
+            game.SetBeacon();
         }
 
         private void NextStage_Click(object sender, EventArgs e)
@@ -869,41 +881,36 @@ namespace EDCHOST22
         private void LastStage_Click(object sender, EventArgs e)
         {
             game.mGameTime = 0;
-            game.gameStage--;
+            game.mGameStage--;
         }
 
-        private void CarGetIn_Click(object sender, EventArgs e)
+
+        #endregion
+
+
+        #region 由定时器控制的函数，已完成修改
+
+        //计时器事件，每100ms触发一次，向小车发送信息
+        private void timerMsg100ms_Tick(object sender, EventArgs e)
         {
-            if(game.gameStage==GameStage.FIRST_1)
-            {
-                game.CarA.CarGetIn();
-            }
-            if(game.gameStage==GameStage.LATTER_1)
-            {
-                game.CarB.CarGetIn();
-            }
-
+            Flush();
+            // 如果A车在场地内且在迷宫外
+            SendCarAMessage();
+            // 如果B车在场地内且在迷宫外
+            SendCarBMessage();
+            //更新界面
+            SetWindowSize();
         }
 
-        private void GetOut_Click(object sender, EventArgs e)
-        {
-            if (game.gameStage == GameStage.FIRST_1)
-            {
-                game.CarA.CarGetOut();
-            }
-            if (game.gameStage == GameStage.LATTER_1)
-            {
-                game.CarB.CarGetOut();
-            }
-        }
+        
 
+        ////计时器事件，每1s触发一次，向在迷宫内的小车发送信息
+        //private void timerMsg1s_Tick(object sender, EventArgs e)
+        //{
+        //    game.UpdateCarLastOneSecondPos();
+        //    game.SetFlood();
+        //}
 
-        //计时器事件，每1s触发一次，向在迷宫内的小车发送信息
-        private void timerMsg1s_Tick(object sender, EventArgs e)
-        {
-            game.UpdateCarLastOneSecondPos();
-            game.SetFlood();
-        }
         #endregion
 
 
