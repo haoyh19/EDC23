@@ -40,7 +40,7 @@ namespace EDCHOST22
             //生成第一回合要用到的两个矿
             int stage1_mine1_x = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
             int stage1_mine1_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
-            int stage1_mine1_d = ran.Next(Court.MIN_MINE_DEPTH, Court.MAX_MINE_DEPTH + 1);
+            int stage1_mine1_d = ran.Next(Court.MIN_MINE_DEPTH, Court.MAX_MINE_DEPTH + 1);   //单参数Next含上界
             Dot stage1_mine1_xy = new Dot(stage1_mine1_x, stage1_mine1_y);
             Mine stage1_mine1 = new Mine(stage1_mine1_xy, stage1_mine1_d);
 
@@ -108,7 +108,7 @@ namespace EDCHOST22
             {
                 int stage2_mine_x = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
                 int stage2_mine_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
-                int stage2_mine_d = ran.Next(Court.MAX_MINE_DEPTH);
+                int stage2_mine_d = ran.Next(Court.MIN_MINE_DEPTH, Court.MAX_MINE_DEPTH + 1);
                 Dot stage2_mine_xy = new Dot(stage2_mine_x, stage2_mine_y);
                 while (!MinesApart(stage2_mine_xy, i) || Dot.InCollisionZones(stage2_mine_xy, beacon_loc))
                 {
