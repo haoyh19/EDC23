@@ -13,13 +13,13 @@ namespace EDCHOST22
     public static class MyConvert
     {
         //从格点转化为int，传入坐标，返回Dot
-        public static Dot CrossNo2Dot(int CrossNoX, int CrossNoY)
-        {
-            int x = Game.MAZE_SHORT_BORDER_CM + Game.MAZE_CROSS_DIST_CM / 2 + Game.MAZE_CROSS_DIST_CM * CrossNoX;
-            int y = Game.MAZE_SHORT_BORDER_CM + Game.MAZE_CROSS_DIST_CM / 2 + Game.MAZE_CROSS_DIST_CM * CrossNoY;
-            Dot temp = new Dot(x, y);
-            return temp;
-        }
+        //public static Dot CrossNo2Dot(int CrossNoX, int CrossNoY)
+        //{
+        //    int x = Game.MAZE_SHORT_BORDER_CM + Game.MAZE_CROSS_DIST_CM / 2 + Game.MAZE_CROSS_DIST_CM * CrossNoX;
+        //    int y = Game.MAZE_SHORT_BORDER_CM + Game.MAZE_CROSS_DIST_CM / 2 + Game.MAZE_CROSS_DIST_CM * CrossNoY;
+        //    Dot temp = new Dot(x, y);
+        //    return temp;
+        //}
 
         public static Point2i Dot2Point(Dot dot)
         {

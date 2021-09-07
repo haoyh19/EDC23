@@ -24,7 +24,15 @@ namespace EDCHOST22
             //一辆车放置的信标数量最大为3
             MaxBeaconNum = 3;
             CarABeacon = new Dot[MaxBeaconNum];
+            for (int i = 0; i < MaxBeaconNum; i++)
+            {
+                CarABeacon[i] = new Dot();
+            }
             CarBBeacon = new Dot[MaxBeaconNum];
+            for (int i = 0; i < MaxBeaconNum; i++)
+            {
+                CarBBeacon[i] = new Dot();
+            }
             CarABeaconNum = 0;
             CarBBeaconNum = 0;
         }

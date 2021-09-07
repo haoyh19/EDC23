@@ -51,6 +51,7 @@ namespace EDCHOST22
         //public int mRightPosCount;        // 用于记录小车位置是否该正确了（实现1Hz）
         public int WhetherCarIn;          // 记录小车是否进入了迷宫
         public int mBeaconCount;          // 记录小车放置信标数目
+        public int mRightPos;           // 车的坐标是否正确
 
 
         public Car(Camp c, int task)
@@ -74,6 +75,7 @@ namespace EDCHOST22
             mFoulCount = 0;
             WhetherCarIn = 0;
             mTransPos = new Dot();
+            mRightPos = 0;
         }
         public void UpdateLastPos() // 更新上一帧位置
         {
