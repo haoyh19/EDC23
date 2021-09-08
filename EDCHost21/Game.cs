@@ -341,7 +341,7 @@ namespace EDCHOST22
                     if (flag != -1)
                     {
                         mMineInMaze[flag] = 0;
-                        CarA.AddMineLoad(0);
+                        CarA.AddMineLoad(1);
                         CarA.AddMineState();
                     }
                 }
@@ -395,7 +395,7 @@ namespace EDCHOST22
                     if (flag != -1)
                     {
                         mMineInMaze[flag] = 0;
-                        CarB.AddMineLoad(0);
+                        CarB.AddMineLoad(1);
                         CarB.AddMineState();
                     }
                 }
