@@ -34,7 +34,8 @@ namespace EDCHOST22
         public Dot mParkPoint;            // 第一回合的随机停车点
         public Mine[] mMineArray;        // 当前在场上的矿的数组
         public int[] mMineInMaze;          // 两矿是否在场上（1在场上，0已被收集运走）
-        public int mIsOverTime;             
+        public int mIsOverTime;             // 是否是加时赛
+        public int mSecCount;             // 数到1sec
 
 
         // 构造一个新的Game类，默认为CampA是先上半场上一阶段进行
@@ -60,6 +61,7 @@ namespace EDCHOST22
             {
                 mMineInMaze[i] = 1;
             }
+            mSecCount = 0;
         }
 
         #region 辅助函数
@@ -412,8 +414,14 @@ namespace EDCHOST22
                 if (mGameStage == GameStage.FIRST_A)
                 {
                     if (CarA.mMineState == MINE_COUNT_MAX &&
-                        Dot.InCollisionZone(CarA.mPos, mParkPoint))
+                        Dot.InCollisionZone(CarA.mPos, mParkPoint) &&
+                        Dot.InCollisionZone(CarA.mLastPos, mParkPoint))
                     {
+                        mSecCount++;
+                    }
+                    if (mSecCount == 9)
+                    {
+                        mSecCount = 0;
                         CarA.AddMineUnload(0);
                         CarA.ClearMineState();
                         if (mGameTime < 60000)
@@ -449,8 +457,14 @@ namespace EDCHOST22
                 if (mGameStage == GameStage.FIRST_B)
                 {
                     if (CarB.mMineState == MINE_COUNT_MAX &&
-                        Dot.InCollisionZone(CarB.mPos, mParkPoint))
+                        Dot.InCollisionZone(CarB.mPos, mParkPoint) &&
+                        Dot.InCollisionZone(CarB.mLastPos, mParkPoint))
                     {
+                        mSecCount++;
+                    }
+                    if (mSecCount == 9)
+                    {
+                        mSecCount = 0;
                         CarB.AddMineUnload(0);
                         CarB.ClearMineState();
                         if (mGameTime < 60000)
@@ -513,7 +527,7 @@ namespace EDCHOST22
                 {
                     flag += mMineInMaze[i];
                 }
-                if (mGameTime > 60000 || flag == 0)
+                if (mGameTime > 60000 || (flag == 0 && CarA.mMineState == 0))
                 {
                     mGameState = GameState.UNSTART;
                     mGameStage++;
@@ -664,6 +678,7 @@ namespace EDCHOST22
                 mGameState = GameState.NORMAL;
                 mGameTime = 0;
                 mPrevTime = GetCurrentTime();
+                mSecCount = 0;
                 Debug.WriteLine("start");
             }
         }
@@ -744,6 +759,7 @@ namespace EDCHOST22
             {
                 mMineInMaze[i] = 1;
             }
+            mSecCount= 0;
             Debug.WriteLine("Game构造函数FIRST_A执行完毕");
         }
 
