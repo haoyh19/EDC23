@@ -445,28 +445,31 @@ namespace EDCHOST22
             if (game.mGameState == GameState.NORMAL)
             {
                 Point2f[] logicMineDots = new Point2f[game.mMineInMaze[0] + game.mMineInMaze[1]];
-                int temp = 0;
-                for (int i = 0; i < MineGenerator.COURTMINENUM; i++)
+                if (logicMineDots.Length != 0)
                 {
-                    if (game.mMineInMaze[i] == 1)
+                    int temp = 0;
+                    for (int i = 0; i < MineGenerator.COURTMINENUM; i++)
                     {
-                        logicMineDots[temp++] = Cvt.Dot2Point(game.mMineArray[i].Pos);
+                        if (game.mMineInMaze[i] == 1)
+                        {
+                            logicMineDots[temp++] = Cvt.Dot2Point(game.mMineArray[i].Pos);
+                        }
                     }
-                }
-                Point2f[] showMineDots = coordCvt.LogicToCamera(logicMineDots);
-                for (int i = 0; i < game.mMineInMaze[0] + game.mMineInMaze[1]; i++)
-                {
-                    if (flags.calibrated)
+                    Point2f[] showMineDots = coordCvt.LogicToCamera(logicMineDots);
+                    for (int i = 0; i < game.mMineInMaze[0] + game.mMineInMaze[1]; i++)
                     {
-                        int x = (int)showMineDots[i].X;
-                        int y = (int)showMineDots[i].Y;
-                        int Tx = x - 10, Ty = y - 10, Tcol = Icon_Mine.Cols, Trow = Icon_Mine.Rows;
-                        if (Tx < 0) Tx = 0;
-                        if (Ty < 0) Ty = 0;
-                        if (Tx + Tcol > mat.Cols) Tcol = mat.Cols - Tx;
-                        if (Ty + Trow > mat.Rows) Trow = mat.Rows - Ty;
-                        Mat Pos = new Mat(mat, new Rect(Tx, Ty, Tcol, Trow));
-                        Icon_Mine.CopyTo(Pos);
+                        if (flags.calibrated)
+                        {
+                            int x = (int)showMineDots[i].X;
+                            int y = (int)showMineDots[i].Y;
+                            int Tx = x - 10, Ty = y - 10, Tcol = Icon_Mine.Cols, Trow = Icon_Mine.Rows;
+                            if (Tx < 0) Tx = 0;
+                            if (Ty < 0) Ty = 0;
+                            if (Tx + Tcol > mat.Cols) Tcol = mat.Cols - Tx;
+                            if (Ty + Trow > mat.Rows) Trow = mat.Rows - Ty;
+                            Mat Pos = new Mat(mat, new Rect(Tx, Ty, Tcol, Trow));
+                            Icon_Mine.CopyTo(Pos);
+                        }
                     }
                 }
             }
@@ -576,7 +579,7 @@ namespace EDCHOST22
                 $"成功运送次数　　{game.CarA.mMine1Unload} + {game.CarA.mMine2Unload}\n";
             label_BMessage.Text =
                 $"{game.CarB.mMine1Load} + {game.CarB.mMine2Load}　　收集金矿数\n" +
-                $"{game.CarB.mMine1Unload} + {game.CarB.mMine2Unload}　　获得防汛物资数\n";
+                $"{game.CarB.mMine1Unload} + {game.CarB.mMine2Unload}　　成功运送次数\n";
 
             // A,B车的坐标信息
             label_Debug.Text =

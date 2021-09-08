@@ -120,7 +120,6 @@
     <Compile Include="Game.cs" />
     <Compile Include="Localiser.cs" />
     <Compile Include="MyFlags.cs" />
-    <Compile Include="Flood.cs" />
     <Compile Include="SetWindow.cs">
       <SubType>Form</SubType>
     </Compile>
