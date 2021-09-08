@@ -18,6 +18,7 @@ namespace EDCHOST22
         public const int TOTAL_PARKING_AREA = 8;     // 停车点的总个数
         public const int MAX_MINE_DEPTH = 200;  // 矿的最大深度
         public const int MIN_MINE_DEPTH = 1;    // 矿的最小深度
+
         /* 停车点编号方式：
          *      0 1 2
          *      7   3
