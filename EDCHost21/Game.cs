@@ -310,7 +310,7 @@ namespace EDCHOST22
                     int flag = -1;
                     for (int i = 0; i < MINE_COUNT_MAX; i++)
                     {
-                        if (Dot.InCollisionZone(CarA.mPos, mMineArray[i].Pos))
+                        if (Dot.InCollisionZone(CarA.mPos, mMineArray[i].Pos) && mMineInMaze[i] == 1)
                         {
                             flag = i;
                             break;
@@ -332,7 +332,7 @@ namespace EDCHOST22
                     int flag = -1;
                     for (int i = 0; i < MINE_COUNT_MAX; i++)
                     {
-                        if (Dot.InCollisionZone(CarA.mPos, mMineArray[i].Pos))
+                        if (Dot.InCollisionZone(CarA.mPos, mMineArray[i].Pos) && mMineInMaze[i] == 1)
                         {
                             flag = i;
                             break;
@@ -364,7 +364,7 @@ namespace EDCHOST22
                     int flag = -1;
                     for (int i = 0; i < MINE_COUNT_MAX; i++)
                     {
-                        if (Dot.InCollisionZone(CarB.mPos, mMineArray[i].Pos))
+                        if (Dot.InCollisionZone(CarB.mPos, mMineArray[i].Pos) && mMineInMaze[i] == 1)
                         {
                             flag = i;
                             break;
@@ -386,7 +386,7 @@ namespace EDCHOST22
                     int flag = -1;
                     for (int i = 0; i < MINE_COUNT_MAX; i++)
                     {
-                        if (Dot.InCollisionZone(CarB.mPos, mMineArray[i].Pos))
+                        if (Dot.InCollisionZone(CarB.mPos, mMineArray[i].Pos) && mMineInMaze[i] == 1)
                         {
                             flag = i;
                             break;
