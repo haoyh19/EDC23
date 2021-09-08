@@ -579,7 +579,7 @@ namespace EDCHOST22
                 $"成功运送次数　　{game.CarA.mMine1Unload} + {game.CarA.mMine2Unload}\n";
             label_BMessage.Text =
                 $"{game.CarB.mMine1Load} + {game.CarB.mMine2Load}　　收集金矿数\n" +
-                $"{game.CarB.mMine1Unload} + {game.CarB.mMine2Unload}　　获得防汛物资数\n";
+                $"{game.CarB.mMine1Unload} + {game.CarB.mMine2Unload}　　成功运送次数\n";
 
             // A,B车的坐标信息
             label_Debug.Text =
