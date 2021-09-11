@@ -831,11 +831,11 @@ namespace EDCHOST22
             message[messageCnt++] = (byte)(mParkPoint.y);
             message[messageCnt++] = (byte)(((CarA.mIsInMaze << 7) & 0x80)
                 | ((((mGameState == GameState.NORMAL) && ((mGameStage == GameStage.FIRST_A) || ((mGameStage == GameStage.SECOND_A) && (CarA.mIsInMaze != 1))) ? 1 : 0) << 6) & 0x40)
-                | (((0 < mBeacon.CarABeaconNum) ? 1 : 0) & 0x20)
-                | (((1 < mBeacon.CarABeaconNum) ? 1 : 0) & 0x10)
-                | (((2 < mBeacon.CarABeaconNum) ? 1 : 0) & 0x08)
-                | (((0 < mBeacon.CarBBeaconNum) ? 1 : 0) & 0x04)
-                | (((1 < mBeacon.CarBBeaconNum) ? 1 : 0) & 0x02)
+                | ((((0 < mBeacon.CarABeaconNum) ? 1 : 0) << 5) & 0x20)
+                | ((((1 < mBeacon.CarABeaconNum) ? 1 : 0) << 4) & 0x10)
+                | ((((2 < mBeacon.CarABeaconNum) ? 1 : 0) << 3) & 0x08)
+                | ((((0 < mBeacon.CarBBeaconNum) ? 1 : 0) << 2) & 0x04)
+                | ((((1 < mBeacon.CarBBeaconNum) ? 1 : 0) << 1) & 0x02)
                 | (((2 < mBeacon.CarBBeaconNum) ? 1 : 0) & 0x01));
             message[messageCnt++] = (byte)(CarA.MyScore >> 8);
             message[messageCnt++] = (byte)(CarA.MyScore);
@@ -881,11 +881,11 @@ namespace EDCHOST22
             message[messageCnt++] = (byte)(mParkPoint.y);
             message[messageCnt++] = (byte)(((CarB.mIsInMaze << 7) & 0x80)
                 | ((((mGameState == GameState.NORMAL) && ((mGameStage == GameStage.FIRST_B) || ((mGameStage == GameStage.SECOND_B) && (CarB.mIsInMaze != 1))) ? 1 : 0) << 6) & 0x40)
-                | (((0 < mBeacon.CarBBeaconNum) ? 1 : 0) & 0x20)
-                | (((1 < mBeacon.CarBBeaconNum) ? 1 : 0) & 0x10)
-                | (((2 < mBeacon.CarBBeaconNum) ? 1 : 0) & 0x08)
-                | (((0 < mBeacon.CarABeaconNum) ? 1 : 0) & 0x04)
-                | (((1 < mBeacon.CarABeaconNum) ? 1 : 0) & 0x02)
+                | ((((0 < mBeacon.CarBBeaconNum) ? 1 : 0) << 5) & 0x20)
+                | ((((1 < mBeacon.CarBBeaconNum) ? 1 : 0) << 4) & 0x10)
+                | ((((2 < mBeacon.CarBBeaconNum) ? 1 : 0) << 3) & 0x08)
+                | ((((0 < mBeacon.CarABeaconNum) ? 1 : 0) << 2) & 0x04)
+                | ((((1 < mBeacon.CarABeaconNum) ? 1 : 0) << 1) & 0x02)
                 | (((2 < mBeacon.CarABeaconNum) ? 1 : 0) & 0x01));
             message[messageCnt++] = (byte)(CarB.MyScore >> 8);
             message[messageCnt++] = (byte)(CarB.MyScore);
