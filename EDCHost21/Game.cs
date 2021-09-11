@@ -555,7 +555,7 @@ namespace EDCHOST22
                 {
                     flag += mMineInMaze[i];
                 }
-                if (mGameTime > 60000 || flag == 0)
+                if (mGameTime > 60000 || (flag == 0 && CarB.mMineState == 0))
                 {
                     mGameState = GameState.UNSTART;
                     mMineGenerator.GenerateStage2(mBeacon);
