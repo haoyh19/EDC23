@@ -7,13 +7,11 @@ uint8_t zigbeeBuffer[1];
 
 UART_HandleTypeDef* zigbee_huart;
 
+volatile struct BasicInfo Game;//储存比赛时间、比赛状态信息
+volatile struct CarInfo CarInfo;//储存车辆信息
+volatile struct ParkPosInfo ParkPos;//储存停车点位置信息
+volatile struct MineInfo MineInfo;//储存金矿强度有效性信息
 
-volatile struct BasicInfo Game;//储存比赛状态、时间、泄洪口信息
-volatile struct CarInfo Car;//储存车辆信息
-volatile struct PassengerInfo Passenger;//储存人员的信息、位置和送达位置
-volatile struct PackageInfo Package[6];//储存防汛物资的信息
-volatile struct FloodInfo Flood[5];//储存泄洪口位置信息
-volatile struct ObstacleInfo Obstacle[8];//储存虚拟障碍信息
 /***********************接口****************************/
 void zigbee_Init(UART_HandleTypeDef *huart)
 {
@@ -32,7 +30,7 @@ void zigbeeMessageRecord(void)
 		{
 
 			int index = message_head;
-			for (int i = 0; i < 70; i++)
+			for (int i = 0; i < ZIGBEE_MESSAGE_LENTH; i++)
 			{
 				zigbeeReceive[i] = zigbeeMessage[index];
 				index = receiveIndexAdd(index, 1);
@@ -45,6 +43,9 @@ void zigbeeMessageRecord(void)
 		}
 	}
 	HAL_UART_Receive_IT(zigbee_huart, zigbeeBuffer, 1);
+}
+uint16_t getGameTime(void) {
+	return Game.Time;
 }
 enum GameStateEnum getGameState(void)
 {
@@ -65,247 +66,122 @@ enum GameStateEnum getGameState(void)
 	{
 		return GameOver;
 	}
-
 	return GameNotStart;
 }
-uint16_t getGameTime(void)
-{
-	return Game.Time;
+uint16_t getCarTask(void) {
+	return (uint16_t)CarInfo.Task;
 }
-uint16_t getGameFlood(void)
-{
-    return (uint16_t)Game.stop;
+uint16_t getIsMineIntensityValid(int MineNo) {
+	if (MineNo != 0 && MineNo != 1)
+		return (uint16_t)INVALID_ARG;
+	else
+		return (uint16_t)MineInfo.IsMineIntensityValid[MineNo];
 }
-uint16_t getPassengerstartposX(void)
-{
-    return Passenger.startpos.X;
+uint16_t getCarMineNum(void) {
+	return (uint16_t)CarInfo.MineNum;
 }
-uint16_t getPassengerstartposY(void)
-{
-    return Passenger.startpos.Y;
+uint16_t getCarPosX(void) {
+	return CarInfo.Pos.x;
 }
-struct Position getPassengerstartpos(void)
-{
-    return Passenger.startpos;
+uint16_t getCarPosY(void) {
+	return CarInfo.Pos.y;
 }
-uint16_t getPassengerfinalposX(void)
-{
-    return Passenger.finalpos.X;
+struct Position getCarPos(void) {
+	return CarInfo.Pos;
 }
-uint16_t getPassengerfinalposY(void)
-{
-    return Passenger.finalpos.Y;
+uint32_t getMineIntensity(int MineNo) {
+	if (MineNo != 0 && MineNo != 1)
+		return (uint16_t)INVALID_ARG;
+	else
+		return CarInfo.MineIntensity[MineNo];
 }
-struct Position getPassengerfinalpos(void)
-{
-    return Passenger.finalpos;
+uint16_t getDistanceOfMyBeacon(int BeaconNo) {
+	if (BeaconNo != 0 && BeaconNo != 1 && BeaconNo != 2)
+		return (uint16_t)INVALID_ARG;
+	else
+		return CarInfo.DistanceOfMyBeacon[BeaconNo];
 }
-uint16_t getFloodposX(int FloodNo)
-{
-    return Flood[FloodNo].pos.X;
+uint16_t getDistanceOfRivalBeacon(int BeaconNo) {
+	if (BeaconNo != 0 && BeaconNo != 1 && BeaconNo != 2)
+		return (uint16_t)INVALID_ARG;
+	else
+		return CarInfo.DistanceOfRivalBeacon[BeaconNo];
 }
-uint16_t getFloodposY(int FloodNo)
-{
-    return Flood[FloodNo].pos.Y;
+uint16_t getParkPosX(void) {
+	return ParkPos.Pos.x;
 }
-struct Position getFloodpos(int FloodNo)
-{
-    return Flood[FloodNo].pos;
+uint16_t getParkPosY(void) {
+	return ParkPos.Pos.y;
 }
-uint16_t getCarposX()
-{
-		return (uint16_t)Car.pos.X;
+struct Position getParkPos(void) {
+	return ParkPos.Pos;
+}
+uint16_t getCarZone(void) {
+	return (uint16_t)CarInfo.Zone;
+}
+uint16_t getIsCarPosValid(void) {
+	return (uint16_t)CarInfo.IsCarPosValid;
+}
+uint16_t getIsDistanceOfMyBeaconValid(int BeaconNo) {
+	if (BeaconNo != 0 && BeaconNo != 1 && BeaconNo != 2)
+		return (uint16_t)INVALID_ARG;
+	else
+		return (uint16_t)CarInfo.IsDistanceOfMyBeaconValid[BeaconNo];
+}
+uint16_t getIsDistanceOfRivalBeaconValid(int BeaconNo) {
+	if (BeaconNo != 0 && BeaconNo != 1 && BeaconNo != 2)
+		return (uint16_t)INVALID_ARG;
+	else
+		return (uint16_t)CarInfo.IsDistanceOfRivalBeaconValid[BeaconNo];
+}
+uint16_t getCarScore(void) {
+	return CarInfo.Score;
+}
 
-}
-uint16_t getCarposY()
-{
-		return (uint16_t)Car.pos.Y;
-}
-struct Position getCarpos()
-{
-		return Car.pos;
-}
-uint16_t getCarWhetherRightPos()
-{
-    return (uint16_t)Car.WhetherRightPos;
-}
-
-uint16_t getPackageposX(int PackNo)
-{
-    if (PackNo != 0 && PackNo != 1 && PackNo != 2 && PackNo != 3 && PackNo != 4 && PackNo != 5)
-		return (uint16_t)INVALID_ARG;
-	else
-		return (uint16_t)Package[PackNo].pos.X;
-}
-uint16_t getPackageposY(int PackNo)
-{
-    if (PackNo != 0 && PackNo != 1 && PackNo != 2 && PackNo != 3 && PackNo != 4 && PackNo != 5)
-		return (uint16_t)INVALID_ARG;
-	else
-		return (uint16_t)Package[PackNo].pos.Y;
-}
-uint16_t getPackagewhetherpicked(int PackNo)
-{
-	if (PackNo != 0 && PackNo != 1 && PackNo != 2 && PackNo != 3 && PackNo != 4 && PackNo != 5)
-		return (uint16_t)INVALID_ARG;
-	else
-		return (uint16_t)Package[PackNo].whetherpicked;
-}
-struct Position getPackagepos(int PackNo)
-{
-		return Package[PackNo].pos;
-}
-uint16_t getCarpicknum()
-{
-		return (uint16_t)Car.picknum;
-}
-uint16_t getCartransportnum()
-{
-		return (uint16_t)Car.transportnum;
-}
-uint16_t getCartransport()
-{
-		return (uint16_t)Car.transport;
-}
-uint16_t getCarscore()
-{
-		return (uint16_t)Car.score;
-}
-uint16_t getCartask()
-{
-    return (uint16_t)Car.task;
-}
-uint16_t getCararea()
-{
-		return (uint16_t)Car.area;
-}
-uint16_t getObstacleAposX(int ObstacleNo)		    //虚拟障碍Ax坐标
-{	
-	  return (uint16_t)Obstacle[ObstacleNo].posA.X;
-}
-uint16_t getObstacleAposY(int ObstacleNo)		    //虚拟障碍Ax坐标
-{
-    return (uint16_t)Obstacle[ObstacleNo].posA.Y;
-}
-uint16_t getObstacleBposX(int ObstacleNo)		    //虚拟障碍Ax坐标
-{
-    return (uint16_t)Obstacle[ObstacleNo].posB.X;
-}
-uint16_t getObstacleBposY(int ObstacleNo)	    //虚拟障碍Ax坐标
-{
-    return (uint16_t)Obstacle[ObstacleNo].posB.Y;
-}
-struct Position getObstacleApos(int ObstacleNo)
-{
-    return Obstacle[ObstacleNo].posA;
-}
-struct Position getObstacleBpos(int ObstacleNo)
-{
-    return Obstacle[ObstacleNo].posB;
-}
 /***************************************************/
 
-void DecodeBasicInfo()
-{
+void DecodeBasicInfo() {
 	Game.Time = (zigbeeReceive[0] << 8) + zigbeeReceive[1];
 	Game.GameState = (zigbeeReceive[2] & 0xC0) >> 6;
-	Game.stop=(zigbeeReceive[2]& 0x07);
 }
-void DecodeCarInfo()
-{
-    Car.pos.X=(zigbeeReceive[3]);
-    Car.pos.Y=(zigbeeReceive[4]);
-    Car.score=(zigbeeReceive[32]<<8)+zigbeeReceive[33];
-    Car.picknum=zigbeeReceive[35];
-    Car.task=((zigbeeReceive[2] & 0x20)>>5);
-    Car.transport=((zigbeeReceive[2] & 0x08)>>3);
-    Car.transportnum=(zigbeeReceive[34]);
-    Car.area=((zigbeeReceive[19] & 0x02)>>1);
-    Car.WhetherRightPos = (zigbeeReceive[19] & 0x01);
+void DecodeCarInfo(){
+	CarInfo.Task = (zigbeeReceive[2] & 0x20) >> 5;
+	CarInfo.MineNum = (zigbeeReceive[2] & 0x07);
+	CarInfo.Pos.x = (zigbeeReceive[3] << 8) + zigbeeReceive[4];
+	CarInfo.Pos.y = (zigbeeReceive[5] << 8) + zigbeeReceive[6];
+	CarInfo.IsCarPosValid = (zigbeeReceive[31] & 0x40) >> 6;
+	CarInfo.Zone = (zigbeeReceive[31] & 0x80) >> 7;
+	CarInfo.Score = (zigbeeReceive[32] << 8) + zigbeeReceive[33];
+	for (int i = 0; i < 2; i++) {
+		CarInfo.MineIntensity[i] = zigbeeReceive[7+4*i] << 24 + zigbeeReceive[8 + 4 * i] << 16 + zigbeeReceive[9 + 4 * i] << 8 + zigbeeReceive[10 + 4 * i];
+	}
+	for (int i = 0; i < 3; i++) {
+		CarInfo.DistanceOfMyBeacon[i] = (zigbeeReceive[15+2*i] << 8) + zigbeeReceive[16+2*i];
+	}
+	for (int i = 0; i < 3; i++) {
+		CarInfo.DistanceOfRivalBeacon[i] = (zigbeeReceive[21 + 2 * i] << 8) + zigbeeReceive[22 + 2 * i];
+	}
+	Carinfo.IsDistanceOfMyBeaconValid[0] = (zigbeeReceive[31] &0x20) >>5 ;
+	Carinfo.IsDistanceOfMyBeaconValid[1] = (zigbeeReceive[31] &0x10) >>4 ;
+	Carinfo.IsDistanceOfMyBeaconValid[2] = (zigbeeReceive[31] &0x08) >>3 ;
+	Carinfo.IsDistanceOfRivalBeaconValid[0] = (zigbeeReceive[31] & 0x04) >> 2;
+	Carinfo.IsDistanceOfRivalBeaconValid[1] = (zigbeeReceive[31] & 0x02) >> 1;
+	Carinfo.IsDistanceOfRivalBeaconValid[2] = (zigbeeReceive[31] & 0x01);
 }
-
-void DecodePassengerInfo()
-{
-    Passenger.startpos.X=(zigbeeReceive[15]);
-    Passenger.startpos.Y=(zigbeeReceive[16]);
-    Passenger.finalpos.X=(zigbeeReceive[17]);
-    Passenger.finalpos.Y=(zigbeeReceive[18]);
+void DecodeParkPosInfo() {
+	ParkPos.Pos.x = (zigbeeReceive[27] << 8) + zigbeeReceive[28];
+	ParkPos.Pos.y = (zigbeeReceive[29] << 8) + zigbeeReceive[30];
 }
-void DecodePackageAInfo()
-{
-    Package[0].pos.X=(zigbeeReceive[20]);
-    Package[0].pos.Y=(zigbeeReceive[21]);
-    Package[0].whetherpicked=((zigbeeReceive[19] & 0x80)>>7);
+void DecodeMineInfo(){
+	MineInfo.IsMineIntensityValid[0] = (zigbeeReceive[2] &0x10) >>4 ;
+	MineInfo.IsMineIntensityValid[1] = (zigbeeReceive[2] &0x08) >>3 ;
 }
-void DecodePackageBInfo()
-{
-    Package[1].pos.X=(zigbeeReceive[22]);
-    Package[1].pos.Y=(zigbeeReceive[23]);
-    Package[1].whetherpicked=((zigbeeReceive[19] & 0x40)>>6);
-}
-void DecodePackageCInfo()
-{
-    Package[2].pos.X=(zigbeeReceive[24]);
-    Package[2].pos.Y=(zigbeeReceive[25]);
-    Package[2].whetherpicked=((zigbeeReceive[19] & 0x20)>>5);
-}
-void DecodePackageDInfo()
-{
-    Package[3].pos.X=(zigbeeReceive[26]);
-    Package[3].pos.Y=(zigbeeReceive[27]);
-    Package[3].whetherpicked=((zigbeeReceive[19] & 0x10)>>4);
-}
-void DecodePackageEInfo()
-{
-    Package[4].pos.X=(zigbeeReceive[28]);
-    Package[4].pos.Y=(zigbeeReceive[29]);
-    Package[4].whetherpicked=((zigbeeReceive[19] & 0x08)>>3);
-}
-void DecodePackageFInfo()
-{
-    Package[5].pos.X=(zigbeeReceive[30]);
-    Package[5].pos.Y=(zigbeeReceive[31]);
-    Package[5].whetherpicked=((zigbeeReceive[19] & 0x04)>>2);
-}
-void DecodeFloodInfo()
-{
-    Flood[0].pos.X=(zigbeeReceive[5]);
-    Flood[0].pos.Y=(zigbeeReceive[6]);
-	  Flood[1].pos.X=(zigbeeReceive[7]);
-    Flood[1].pos.Y=(zigbeeReceive[8]);
-    Flood[2].pos.X=(zigbeeReceive[9]);
-    Flood[2].pos.Y=(zigbeeReceive[10]);
-    Flood[3].pos.X=(zigbeeReceive[11]);
-    Flood[3].pos.Y=(zigbeeReceive[12]);
-    Flood[4].pos.X=(zigbeeReceive[13]);
-    Flood[4].pos.Y=(zigbeeReceive[14]);
-}
-void DecodeObstacle()
-{
-    int i;
-    for(i=0;i<8;i++)
-    {
-    	  Obstacle[i].posA.X=(zigbeeReceive[36+i*4]);
-        Obstacle[i].posA.Y=(zigbeeReceive[37+i*4]);
-        Obstacle[i].posB.X=(zigbeeReceive[38+i*4]);
-        Obstacle[i].posB.Y=(zigbeeReceive[39+i*4]);
-	  }
-
-
-}
-void Decode()
+void Decode() 
 {
 	DecodeBasicInfo();
 	DecodeCarInfo();
-	DecodePassengerInfo();
-	DecodePackageAInfo();
-	DecodePackageBInfo();
-	DecodePackageCInfo();
-	DecodePackageDInfo();
-	DecodePackageEInfo();
-	DecodePackageFInfo();
-	DecodeFloodInfo();
-	DecodeObstacle();
+	DecodeParkPosInfo();
+	DecodeMineInfo();
 }
 int receiveIndexMinus(int index_h, int num)
 {
@@ -318,7 +194,6 @@ int receiveIndexMinus(int index_h, int num)
 		return index_h - num + ZIGBEE_MESSAGE_LENTH;
 	}
 }
-
 int receiveIndexAdd(int index_h, int num)
 {
 	if (index_h + num < ZIGBEE_MESSAGE_LENTH)
