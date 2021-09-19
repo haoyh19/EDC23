@@ -24,7 +24,7 @@ namespace EDCHOST22
         public const int FOUL_PENALTY = 50;      // 犯规扣分50分；
         public const int BEACON_LIMIT = 3;      // 最多放置3个信标；
         public const int MINE_LIMIT = 5;        // 最多载5个金矿；
-        public const int PORT_COUNT_LIMIT = 3;  // 小车在第二回合最多成功运送3次（得60分）
+        public const int PORT_COUNT_LIMIT = 5;  // 小车在第二回合最多成功运5次（得100分）
 
         
 
