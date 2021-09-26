@@ -13,14 +13,15 @@ namespace EDCHOST22
     {
         public const int COURTMINENUM = 2;       // 同时存在的金矿数
         public const int MINELISTNUM = 30;      //第二回合可取用的金矿总数
-
+        
         public Mine[] MineArray1;        // 第一回合设置金矿的数组
-        public int ParkPoint;            // 第一回合停车点
+        public MineType[] ParkType;            // 编号为i的停车点存储的金矿种类
         public Mine[] MineArray2;        // 第二回合金矿数组
         public int Mine_id;              // 第二回合该取下标为Mine_id的金矿了
 
         public MineGenerator()         // 构造函数
         {
+            
             Mine_id = 0;
 
             MineArray1 = new Mine[COURTMINENUM];
@@ -34,37 +35,53 @@ namespace EDCHOST22
                 MineArray2[i] = new Mine();
             }
             Random ran = new Random();
-
-            ParkPoint = ran.Next(0, 8);        //双参数Next函数不含上限
-
+            ParkType = new MineType[8];
+            for (int i = 0;i < 8; i++)
+            {
+                int temp;
+                int cnt = 0;
+                do
+                {
+                    temp = ran.Next(0,4);
+                    cnt = 0;
+                    for (int j = 0; j < i; j++)
+                    {
+                        cnt += ((int)ParkType[j] == (int)temp) ? 1 : 0;
+                    }
+                } while (cnt >= 2);
+                ParkType[i] = (MineType)temp;
+            }
+            
             //生成第一回合要用到的两个矿
             int stage1_mine1_x = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
             int stage1_mine1_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
             int stage1_mine1_d = ran.Next(Court.MIN_MINE_DEPTH, Court.MAX_MINE_DEPTH + 1);   //单参数Next含上界
             Dot stage1_mine1_xy = new Dot(stage1_mine1_x, stage1_mine1_y);
-            Mine stage1_mine1 = new Mine(stage1_mine1_xy, stage1_mine1_d);
+            MineType stage1_mine1_type = (MineType)ran.Next(0, 4);
+            Mine stage1_mine1 = new Mine(stage1_mine1_xy, stage1_mine1_d, stage1_mine1_type);
 
             int stage1_mine2_x = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
             int stage1_mine2_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
             Dot stage1_mine2_xy = new Dot(stage1_mine2_x, stage1_mine2_y);
             int stage1_mine2_d = ran.Next(Court.MIN_MINE_DEPTH, Court.MAX_MINE_DEPTH + 1);
+            MineType stage1_mine2_type = (MineType)ran.Next(0, 4);
             while (Dot.InCollisionZone(stage1_mine1_xy, stage1_mine2_xy, Court.MINE_LOWERDIST_CM))
             {
                 stage1_mine2_x = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
                 stage1_mine2_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
                 stage1_mine2_xy = new Dot(stage1_mine2_x, stage1_mine2_y);
             }
-            Mine stage1_mine2 = new Mine(stage1_mine2_xy, stage1_mine2_d);
+            Mine stage1_mine2 = new Mine(stage1_mine2_xy, stage1_mine2_d, stage1_mine2_type);
 
             MineArray1[0] = stage1_mine1;
             MineArray1[1] = stage1_mine2;
 
         }
 
-        //返回停车点
-        public int GetParkPoint()
+        //返回停车点对应的存储类型
+        public MineType[] GetParkType()
         {
-            return ParkPoint;
+            return ParkType;
         }
 
         //返回第一回合的金矿组
@@ -116,7 +133,7 @@ namespace EDCHOST22
                     stage2_mine_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
                     stage2_mine_xy = new Dot(stage2_mine_x, stage2_mine_y);
                 }
-                Mine stage2_mine = new Mine(stage2_mine_xy, stage2_mine_d);
+                Mine stage2_mine = new Mine(stage2_mine_xy, stage2_mine_d, (MineType)ran.Next(0,4));
                 MineArray2[i] = stage2_mine;
             }
         }
