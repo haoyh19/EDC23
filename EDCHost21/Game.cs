@@ -800,13 +800,13 @@ namespace EDCHOST22
             message[messageCnt++] = (byte)((mGameTime / 1000) >> 8);
             message[messageCnt++] = (byte)(mGameTime / 1000);
             message[messageCnt++] = (byte)((((byte)mGameStage << 6) & 0xC0) | (((byte)CarA.mTaskState << 5) & 0x20) |
-                (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08) | ((byte)CarA.mMineState.Sum() & 0x07));
+                (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08));
             message[messageCnt++] = (byte)(CarA.mTransPos.x >> 8);
             message[messageCnt++] = (byte)(CarA.mTransPos.x);
             message[messageCnt++] = (byte)(CarA.mTransPos.y >> 8);
             message[messageCnt++] = (byte)(CarA.mTransPos.y);
             message[messageCnt++] =
-                (byte) ((((byte) mMineArray[0].Type << 6) & 0xC0) | (((byte) mMineArray[1].Type << 4) & 0x30));
+                (byte) ((((byte) mMineArray[0].Type << 6) & 0xC0) | (((byte) mMineArray[1].Type << 4) & 0x30) | ((byte)CarA.mMineStateSum()));
             message[messageCnt++] = (byte) ((((byte) mBeacon.CarABeaconMineType[0] << 6) & 0xC0) |
                                             (((byte) mBeacon.CarABeaconMineType[1] << 4) & 0x30) |
                                             (((byte) mBeacon.CarABeaconMineType[2] << 2) & 0x0C));
@@ -855,13 +855,13 @@ namespace EDCHOST22
             message[messageCnt++] = (byte)((mGameTime / 1000) >> 8);
             message[messageCnt++] = (byte)(mGameTime / 1000);
             message[messageCnt++] = (byte)((((byte)mGameStage << 6) & 0xC0) | (((byte)CarB.mTaskState << 5) & 0x20) |
-                (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08) | ((byte)CarB.mMineState.Sum() & 0x07));
+                (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08));
             message[messageCnt++] = (byte)(CarB.mTransPos.x >> 8);
             message[messageCnt++] = (byte)(CarB.mTransPos.x);
             message[messageCnt++] = (byte)(CarB.mTransPos.y >> 8);
             message[messageCnt++] = (byte)(CarB.mTransPos.y);
             message[messageCnt++] =
-                (byte)((((byte)mMineArray[0].Type << 6) & 0xC0) | (((byte)mMineArray[1].Type << 4) & 0x30));
+                (byte)((((byte)mMineArray[0].Type << 6) & 0xC0) | (((byte)mMineArray[1].Type << 4) & 0x30) | (byte)CarB.mMineStateSum());
             message[messageCnt++] = (byte)((((byte)mBeacon.CarBBeaconMineType[0] << 6) & 0xC0) |
                                            (((byte)mBeacon.CarBBeaconMineType[1] << 4) & 0x30) |
                                            (((byte)mBeacon.CarBBeaconMineType[2] << 2) & 0x0C));
