@@ -9,7 +9,8 @@ namespace EDCHOST22
     
     public class Beacon
     {
-        public const int MAX_BEACON_NUM = 3;  //一辆车最大允许放置的信标数目为3
+        //如果设置为const,在Game.cs部分无法使用
+        public int MAX_BEACON_NUM = 3;  //一辆车最大允许放置的信标数目为3
 
         //CarA放置的信标
         public Dot[] CarABeacon;
