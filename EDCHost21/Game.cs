@@ -319,7 +319,7 @@ namespace EDCHOST22
                     if (flag != -1)
                     {
                         mMineInMaze[flag] = 0;
-                        CarA.AddMineLoad(0);
+                        CarA.AddMineLoad(0, mMineArray[flag].Type);
                         CarA.AddMineState();
                     }
                 }
@@ -341,7 +341,7 @@ namespace EDCHOST22
                     if (flag != -1)
                     {
                         mMineInMaze[flag] = 0;
-                        CarA.AddMineLoad(1);
+                        CarA.AddMineLoad(1, mMineArray[flag].Type);
                         CarA.AddMineState();
                     }
                 }
@@ -373,7 +373,7 @@ namespace EDCHOST22
                     if (flag != -1)
                     {
                         mMineInMaze[flag] = 0;
-                        CarB.AddMineLoad(0);
+                        CarB.AddMineLoad(0, mMineArray[flag].Type);
                         CarB.AddMineState();
                     }
                 }
@@ -395,7 +395,7 @@ namespace EDCHOST22
                     if (flag != -1)
                     {
                         mMineInMaze[flag] = 0;
-                        CarB.AddMineLoad(1);
+                        CarB.AddMineLoad(1, mMineArray[flag].Type);
                         CarB.AddMineState();
                     }
                 }
@@ -413,7 +413,7 @@ namespace EDCHOST22
             {
                 if (mGameStage == GameStage.FIRST_A)
                 {
-                    if (CarA.mMineState == MINE_COUNT_MAX &&
+                    if (CarA.mMineState.Sum() == MINE_COUNT_MAX &&
                         Dot.InCollisionZone(CarA.mPos, mParkPoint) &&
                         Dot.InCollisionZone(CarA.mLastPos, mParkPoint))
                     {
@@ -422,7 +422,7 @@ namespace EDCHOST22
                     if (mSecCount == 9)
                     {
                         mSecCount = 0;
-                        CarA.AddMineUnload(0);
+                        CarA.AddMineUnload(0, MineType.A);
                         CarA.ClearMineState();
                         if (mGameTime < 60000)
                         {
@@ -456,7 +456,7 @@ namespace EDCHOST22
             {
                 if (mGameStage == GameStage.FIRST_B)
                 {
-                    if (CarB.mMineState == MINE_COUNT_MAX &&
+                    if (CarB.mMineState.Sum() == MINE_COUNT_MAX &&
                         Dot.InCollisionZone(CarB.mPos, mParkPoint) &&
                         Dot.InCollisionZone(CarB.mLastPos, mParkPoint))
                     {
@@ -465,7 +465,7 @@ namespace EDCHOST22
                     if (mSecCount == 9)
                     {
                         mSecCount = 0;
-                        CarB.AddMineUnload(0);
+                        CarB.AddMineUnload(0, MineType.A);
                         CarB.ClearMineState();
                         if (mGameTime < 60000)
                         {
@@ -527,7 +527,7 @@ namespace EDCHOST22
                 {
                     flag += mMineInMaze[i];
                 }
-                if (mGameTime > 60000 || (flag == 0 && CarA.mMineState == 0))
+                if (mGameTime > 60000 || (flag == 0 && CarA.mMineState.Sum() == 0))
                 {
                     mGameState = GameState.UNSTART;
                     mGameStage++;
@@ -555,7 +555,7 @@ namespace EDCHOST22
                 {
                     flag += mMineInMaze[i];
                 }
-                if (mGameTime > 60000 || (flag == 0 && CarB.mMineState == 0))
+                if (mGameTime > 60000 || (flag == 0 && CarB.mMineState.Sum() == 0))
                 {
                     mGameState = GameState.UNSTART;
                     mMineGenerator.GenerateStage2(mBeacon);
@@ -693,7 +693,7 @@ namespace EDCHOST22
             }
             if (UpperCamp == Camp.A && mGameStage == GameStage.FIRST_A)
             {
-                if (mBeacon.CarABeaconNum >= mBeacon.MaxBeaconNum)
+                if (mBeacon.CarABeaconNum >= mBeacon.MAX_BEACON_NUM)
                 {
                     return;
                 }
@@ -706,7 +706,7 @@ namespace EDCHOST22
             }
             else if (UpperCamp == Camp.B && mGameStage == GameStage.FIRST_B)
             {
-                if (mBeacon.CarBBeaconNum >= mBeacon.MaxBeaconNum)
+                if (mBeacon.CarBBeaconNum >= mBeacon.MAX_BEACON_NUM)
                 {
                     return;
                 }
@@ -795,16 +795,21 @@ namespace EDCHOST22
 
         public byte[] PackCarAMessage()//已更新到最新通信协议
         {
-            byte[] message = new byte[36]; //上位机传递多少信息
+            byte[] message = new byte[38]; //上位机传递多少信息
             int messageCnt = 0;
             message[messageCnt++] = (byte)((mGameTime / 1000) >> 8);
             message[messageCnt++] = (byte)(mGameTime / 1000);
             message[messageCnt++] = (byte)((((byte)mGameStage << 6) & 0xC0) | (((byte)CarA.mTaskState << 5) & 0x20) |
-                (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08) | ((byte)CarA.mMineState & 0x07));
+                (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08) | ((byte)CarA.mMineState.Sum() & 0x07));
             message[messageCnt++] = (byte)(CarA.mTransPos.x >> 8);
             message[messageCnt++] = (byte)(CarA.mTransPos.x);
             message[messageCnt++] = (byte)(CarA.mTransPos.y >> 8);
             message[messageCnt++] = (byte)(CarA.mTransPos.y);
+            message[messageCnt++] =
+                (byte) ((((byte) mMineArray[0].Type << 6) & 0xC0) | (((byte) mMineArray[1].Type << 4) & 0x30));
+            message[messageCnt++] = (byte) ((((byte) mBeacon.CarABeaconMineType[0] << 6) & 0xC0) |
+                                            (((byte) mBeacon.CarABeaconMineType[1] << 4) & 0x30) |
+                                            (((byte) mBeacon.CarABeaconMineType[2] << 2) & 0x0C));
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarA.mPos) >> 24);
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarA.mPos) >> 16);
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarA.mPos) >> 8);
@@ -850,11 +855,16 @@ namespace EDCHOST22
             message[messageCnt++] = (byte)((mGameTime / 1000) >> 8);
             message[messageCnt++] = (byte)(mGameTime / 1000);
             message[messageCnt++] = (byte)((((byte)mGameStage << 6) & 0xC0) | (((byte)CarB.mTaskState << 5) & 0x20) |
-                (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08) | ((byte)CarB.mMineState & 0x07));
+                (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08) | ((byte)CarB.mMineState.Sum() & 0x07));
             message[messageCnt++] = (byte)(CarB.mTransPos.x >> 8);
             message[messageCnt++] = (byte)(CarB.mTransPos.x);
             message[messageCnt++] = (byte)(CarB.mTransPos.y >> 8);
             message[messageCnt++] = (byte)(CarB.mTransPos.y);
+            message[messageCnt++] =
+                (byte)((((byte)mMineArray[0].Type << 6) & 0xC0) | (((byte)mMineArray[1].Type << 4) & 0x30));
+            message[messageCnt++] = (byte)((((byte)mBeacon.CarBBeaconMineType[0] << 6) & 0xC0) |
+                                           (((byte)mBeacon.CarBBeaconMineType[1] << 4) & 0x30) |
+                                           (((byte)mBeacon.CarBBeaconMineType[2] << 2) & 0x0C));
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarB.mPos) >> 24);
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarB.mPos) >> 16);
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarB.mPos) >> 8);

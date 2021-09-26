@@ -42,7 +42,7 @@ namespace EDCHOST22
             int stage1_mine1_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
             int stage1_mine1_d = ran.Next(Court.MIN_MINE_DEPTH, Court.MAX_MINE_DEPTH + 1);   //单参数Next含上界
             Dot stage1_mine1_xy = new Dot(stage1_mine1_x, stage1_mine1_y);
-            Mine stage1_mine1 = new Mine(stage1_mine1_xy, stage1_mine1_d);
+            Mine stage1_mine1 = new Mine(stage1_mine1_xy, stage1_mine1_d, MineType.A);
 
             int stage1_mine2_x = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
             int stage1_mine2_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
@@ -54,7 +54,7 @@ namespace EDCHOST22
                 stage1_mine2_y = ran.Next(Court.BORDER_CM, Court.MAX_SIZE_CM + 1 - Court.BORDER_CM);
                 stage1_mine2_xy = new Dot(stage1_mine2_x, stage1_mine2_y);
             }
-            Mine stage1_mine2 = new Mine(stage1_mine2_xy, stage1_mine2_d);
+            Mine stage1_mine2 = new Mine(stage1_mine2_xy, stage1_mine2_d, MineType.A);
 
             MineArray1[0] = stage1_mine1;
             MineArray1[1] = stage1_mine2;
