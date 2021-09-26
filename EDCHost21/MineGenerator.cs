@@ -35,8 +35,8 @@ namespace EDCHOST22
                 MineArray2[i] = new Mine();
             }
             Random ran = new Random();
-            ParkType = new MineType[8];
-            for (int i = 0;i < 8; i++)
+            ParkType = new MineType[Court.TOTAL_PARKING_AREA];
+            for (int i = 0;i < Court.TOTAL_PARKING_AREA; i++)
             {
                 int temp;
                 int cnt = 0;

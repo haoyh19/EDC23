@@ -31,9 +31,10 @@ namespace EDCHOST22
         public FileStream FoulTimeFS;   // 犯规记录
         public int mLastOnBeaconTime;   // 上一次触碰信标的时间，防止多次重复判断撞信标
         public MineGenerator mMineGenerator;    // 用于生成金矿序列
-        public Dot mParkPoint;            // 第一回合的随机停车点
+        //public Dot mParkPoint;            // 第一回合的随机停车点
         public Mine[] mMineArray;        // 当前在场上的矿的数组
         public int[] mMineInMaze;          // 两矿是否在场上（1在场上，0已被收集运走）
+        public Dot[] mParkDots;             // 场上停车点的坐标数组
         public int mIsOverTime;             // 是否是加时赛
         public int mSecCount;             // 数到1sec
 
@@ -53,15 +54,16 @@ namespace EDCHOST22
             mLastOnBeaconTime = -10;
             Debug.WriteLine("Game构造函数FIRST_A执行完毕");
             mMineGenerator = new MineGenerator();
-            mParkPoint = Court.ParkID2Dot(mMineGenerator.GetParkPoint());
+            //mParkPoint = Court.ParkID2Dot(mMineGenerator.GetParkPoint());
             mMineArray = mMineGenerator.GetStage1Mine();
-            mMineInMaze = new int[2];
+            mMineInMaze = new int[MineGenerator.COURTMINENUM];
             mIsOverTime = 0;
-            for (int i = 0; i < mMineInMaze.Length; i++)
+            for (int i = 0; i < MineGenerator.COURTMINENUM; i++)
             {
                 mMineInMaze[i] = 1;
             }
             mSecCount = 0;
+            mParkDots = Court.GetParkDots();
         }
 
         #region 辅助函数
@@ -341,8 +343,8 @@ namespace EDCHOST22
                     if (flag != -1)
                     {
                         mMineInMaze[flag] = 0;
-                        CarA.AddMineLoad(1);
-                        CarA.AddMineState();
+                        CarA.AddMineLoad(1, mMineArray[flag].Type);
+                        CarA.AddMineState(mMineArray[flag].Type);
                     }
                 }
                 else
@@ -395,8 +397,8 @@ namespace EDCHOST22
                     if (flag != -1)
                     {
                         mMineInMaze[flag] = 0;
-                        CarB.AddMineLoad(1);
-                        CarB.AddMineState();
+                        CarB.AddMineLoad(1, mMineArray[flag].Type);
+                        CarB.AddMineState(mMineArray[flag].Type);
                     }
                 }
                 else
@@ -413,13 +415,12 @@ namespace EDCHOST22
             {
                 if (mGameStage == GameStage.FIRST_A)
                 {
-                    if (CarA.mMineState == MINE_COUNT_MAX &&
-                        Dot.InCollisionZone(CarA.mPos, mParkPoint) &&
-                        Dot.InCollisionZone(CarA.mLastPos, mParkPoint))
+                    if (CarA.mMineStateSum() == MINE_COUNT_MAX &&
+                        Dot.InCollisionZones(CarA.mPos, mParkDots))
                     {
                         mSecCount++;
                     }
-                    if (mSecCount == 9)
+                    if (mSecCount >= 9)
                     {
                         mSecCount = 0;
                         CarA.AddMineUnload(0);
@@ -432,16 +433,39 @@ namespace EDCHOST22
                 }
                 else if (mGameStage == GameStage.SECOND_A)
                 {
-                    Dot[] beaconList = new Dot[mBeacon.CarABeaconNum];
+                    int BeaconFlag = -1;
                     for (int i = 0; i < mBeacon.CarABeaconNum; i++)
                     {
-                        beaconList[i] = mBeacon.CarABeacon[i];
+                        if (Dot.InCollisionZone(CarA.mPos, mBeacon.CarABeacon[i]))
+                        {
+                            BeaconFlag = i;
+                            break;
+                        }
                     }
-                    if (CarA.IsMineStateFull() &&
-                        Dot.InCollisionZones(CarA.mPos, beaconList))
+                    if (BeaconFlag == -1)
                     {
-                        CarA.AddMineUnload(1);
-                        CarA.ClearMineState();
+                        int ParkFlag = -1;
+                        for (int i = 0; i < Court.TOTAL_PARKING_AREA; i++)
+                        {
+                            if (Dot.InCollisionZone(CarA.mPos, mParkDots[i]))
+                            {
+                                ParkFlag = i;
+                                break;
+                            }
+                        }
+                        if (ParkFlag != -1 && CarA.mMineState[(int)mMineGenerator.ParkType[ParkFlag]] != 0)
+                        {
+                            CarA.AddMineUnload(1, mMineGenerator.ParkType[ParkFlag]);
+                            CarA.ClearMineTypeState(mMineGenerator.ParkType[ParkFlag]);
+                        }
+                    }
+                    else
+                    {
+                        if (CarA.mMineState[(int)mBeacon.CarABeaconMineType[BeaconFlag]] != 0)
+                        {
+                            CarA.AddMineUnload(1, mMineGenerator.ParkType[BeaconFlag]);
+                            CarA.ClearMineTypeState(mMineGenerator.ParkType[BeaconFlag]);
+                        }
                     }
                 }
                 else
@@ -456,13 +480,12 @@ namespace EDCHOST22
             {
                 if (mGameStage == GameStage.FIRST_B)
                 {
-                    if (CarB.mMineState == MINE_COUNT_MAX &&
-                        Dot.InCollisionZone(CarB.mPos, mParkPoint) &&
-                        Dot.InCollisionZone(CarB.mLastPos, mParkPoint))
+                    if (CarB.mMineStateSum() == MINE_COUNT_MAX &&
+                        Dot.InCollisionZones(CarB.mPos, mParkDots))
                     {
                         mSecCount++;
                     }
-                    if (mSecCount == 9)
+                    if (mSecCount >= 9)
                     {
                         mSecCount = 0;
                         CarB.AddMineUnload(0);
@@ -475,16 +498,39 @@ namespace EDCHOST22
                 }
                 else if (mGameStage == GameStage.SECOND_B)
                 {
-                    Dot[] beaconList = new Dot[mBeacon.CarBBeaconNum];
+                    int BeaconFlag = -1;
                     for (int i = 0; i < mBeacon.CarBBeaconNum; i++)
                     {
-                        beaconList[i] = mBeacon.CarBBeacon[i];
+                        if (Dot.InCollisionZone(CarB.mPos, mBeacon.CarBBeacon[i]))
+                        {
+                            BeaconFlag = i;
+                            break;
+                        }
                     }
-                    if (CarB.IsMineStateFull() &&
-                        Dot.InCollisionZones(CarB.mPos, beaconList))
+                    if (BeaconFlag == -1)
                     {
-                        CarB.AddMineUnload(1);
-                        CarB.ClearMineState();
+                        int ParkFlag = -1;
+                        for (int i = 0; i < Court.TOTAL_PARKING_AREA; i++)
+                        {
+                            if (Dot.InCollisionZone(CarB.mPos, mParkDots[i]))
+                            {
+                                ParkFlag = i;
+                                break;
+                            }
+                        }
+                        if (ParkFlag != -1 && CarB.mMineState[(int)mMineGenerator.ParkType[ParkFlag]] != 0)
+                        {
+                            CarB.AddMineUnload(1, mMineGenerator.ParkType[ParkFlag]);
+                            CarB.ClearMineTypeState(mMineGenerator.ParkType[ParkFlag]);
+                        }
+                    }
+                    else
+                    {
+                        if (CarB.mMineState[(int)mBeacon.CarBBeaconMineType[BeaconFlag]] != 0)
+                        {
+                            CarB.AddMineUnload(1, mMineGenerator.ParkType[BeaconFlag]);
+                            CarB.ClearMineTypeState(mMineGenerator.ParkType[BeaconFlag]);
+                        }
                     }
                 }
                 else
@@ -527,7 +573,7 @@ namespace EDCHOST22
                 {
                     flag += mMineInMaze[i];
                 }
-                if (mGameTime > 60000 || (flag == 0 && CarA.mMineState == 0))
+                if (mGameTime > 60000 || (flag == 0 && CarA.mMineStateSum() == 0))
                 {
                     mGameState = GameState.UNSTART;
                     mGameStage++;
@@ -555,7 +601,7 @@ namespace EDCHOST22
                 {
                     flag += mMineInMaze[i];
                 }
-                if (mGameTime > 60000 || (flag == 0 && CarB.mMineState == 0))
+                if (mGameTime > 60000 || (flag == 0 && CarB.mMineStateSum() == 0))
                 {
                     mGameState = GameState.UNSTART;
                     mMineGenerator.GenerateStage2(mBeacon);
@@ -660,7 +706,6 @@ namespace EDCHOST22
                     UpdateCarBTransPos();
                 }
                 CheckNextStage();
-
             }
         }
 
@@ -684,7 +729,7 @@ namespace EDCHOST22
         }
 
         // 设置信标
-        public void SetBeacon()
+        public void SetBeacon(MineType type)
         {
             if (mGameState == GameState.END || mGameState == GameState.PAUSE || mGameState == GameState.UNSTART ||
                 mGameStage == GameStage.END || mGameStage == GameStage.SECOND_A || mGameStage == GameStage.SECOND_B)
@@ -693,7 +738,7 @@ namespace EDCHOST22
             }
             if (UpperCamp == Camp.A && mGameStage == GameStage.FIRST_A)
             {
-                if (mBeacon.CarABeaconNum >= mBeacon.MaxBeaconNum)
+                if (mBeacon.CarABeaconNum >= Beacon.MAX_BEACON_NUM)
                 {
                     return;
                 }
@@ -701,12 +746,12 @@ namespace EDCHOST22
                 {
                     return;
                 }
-                mBeacon.CarAAddBeacon(CarA.mPos);
+                mBeacon.CarAAddBeacon(CarA.mPos, type);
                 CarA.AddBeaconCount();
             }
             else if (UpperCamp == Camp.B && mGameStage == GameStage.FIRST_B)
             {
-                if (mBeacon.CarBBeaconNum >= mBeacon.MaxBeaconNum)
+                if (mBeacon.CarBBeaconNum >= Beacon.MAX_BEACON_NUM)
                 {
                     return;
                 }
@@ -714,7 +759,7 @@ namespace EDCHOST22
                 {
                     return;
                 }
-                mBeacon.CarBAddBeacon(CarB.mPos);
+                mBeacon.CarBAddBeacon(CarB.mPos, type);
                 CarB.AddBeaconCount();
             }
         }
@@ -751,16 +796,17 @@ namespace EDCHOST22
             mGameTime = 0;
             mLastOnBeaconTime = -10;
             mMineGenerator = new MineGenerator();
-            mParkPoint = Court.ParkID2Dot(mMineGenerator.GetParkPoint());
+            //mParkPoint = Court.ParkID2Dot(mMineGenerator.GetParkPoint());
             mMineArray = mMineGenerator.GetStage1Mine();
-            mMineInMaze = new int[2];
+            mMineInMaze = new int[MineGenerator.COURTMINENUM];
             mIsOverTime = 0;
-            for (int i = 0; i < mMineInMaze.Length; i++)
+            for (int i = 0; i < MineGenerator.COURTMINENUM; i++)
             {
                 mMineInMaze[i] = 1;
             }
             mSecCount= 0;
             Debug.WriteLine("Game构造函数FIRST_A执行完毕");
+            mParkDots = Court.GetParkDots();
         }
 
         // 进行加时赛
@@ -791,8 +837,6 @@ namespace EDCHOST22
 
 
         #region 通信
-
-
         public byte[] PackCarAMessage()//已更新到最新通信协议
         {
             byte[] message = new byte[36]; //上位机传递多少信息

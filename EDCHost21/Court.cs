@@ -48,5 +48,17 @@ namespace EDCHOST22
                 return new Dot(HALF_BORDER_CM, HALF_BORDER_CM + DISTANCE_PARKIN_AREA);
             }
         }
+
+        // 返回所有停车点组成的点集Dots
+        static public Dot[] GetParkDots()
+        {
+            Dot[] ParkDots = new Dot[TOTAL_PARKING_AREA];
+            for (int i = 0; i < TOTAL_PARKING_AREA; i++)
+            {
+                Dot temp = ParkID2Dot(i);
+                ParkDots[i] = new Dot(temp.x, temp.y);
+            }
+            return ParkDots;
+        }
     }
 }

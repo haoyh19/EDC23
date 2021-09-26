@@ -92,7 +92,7 @@ namespace EDCHOST22
             mCrossBeaconCount++;
             UpdateScore();
         }
-        public void AddMineLoad(int round, MineType type)  // 根据回合数(round=0代表回合1，round=1代表回合2，type=0/1/2/3表示种类），增加收集矿物次数1次
+        public void AddMineLoad(int round, MineType type = MineType.A)  // 根据回合数(round=0代表回合1，round=1代表回合2，type=0/1/2/3表示种类），增加收集矿物次数1次
         {
             if (round == 0)
             {
@@ -105,7 +105,7 @@ namespace EDCHOST22
             UpdateScore();
         }
 
-        public void AddMineUnload(int round, MineType type)   // 根据回合数(round=0代表回合1，round=1代表回合2，type=0/1/2/3表示种类）
+        public void AddMineUnload(int round, MineType type=MineType.A)   // 根据回合数(round=0代表回合1，round=1代表回合2，type=0/1/2/3表示种类）
         {
             if (round == 0)
             {
