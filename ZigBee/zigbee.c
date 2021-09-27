@@ -9,7 +9,8 @@ UART_HandleTypeDef* zigbee_huart;
 
 volatile struct BasicInfo Game;//储存比赛时间、比赛状态信息
 volatile struct CarInfo CarInfo;//储存车辆信息
-volatile struct ParkPosInfo ParkPos;//储存停车点位置信息
+volatile struct ParkDotInfo ParkDotInfo;//储存停车点能够存储的金矿种类信息
+volatile struct MyBeaconInfo MyBeaconInfo;//储存己方信标充当仓库存储的金矿种类信息
 volatile struct MineInfo MineInfo;//储存金矿强度有效性信息
 
 /***********************接口****************************/
@@ -77,8 +78,38 @@ uint16_t getIsMineIntensityValid(int MineNo) {
 	else
 		return (uint16_t)MineInfo.IsMineIntensityValid[MineNo];
 }
-uint16_t getCarMineNum(void) {
-	return (uint16_t)CarInfo.MineNum;
+uint16_t getMineArrayType(int MineNo) {
+	if (MineNo != 0 && MineNo != 1)
+		return (uint16_t)INVALID_ARG;
+	else
+		return (uint16_t)MineInfo.MineArrayType[MineNo];
+}
+uint16_t getParkDotMineType(int ParkDotNo) {
+	if (ParkDotNo < 0 || ParkDotNo > 7)
+		return (uint16_t)INVALID_ARG;
+	else
+		return (uint16_t)ParkDotInfo.ParkDotMineType[ParkDotNo];
+}
+uint16_t getMyBeaconMineType(int BeaconNo) {
+	if (BeaconNo != 0 && BeaconNo != 1 && BeaconNo != 2)
+		return (uint16_t)INVALID_ARG;
+	else
+		return (uint16_t)MyBeaconInfo.MyBeaconMineType[BeaconNo];
+}
+uint16_t getCarMineSumNum(void) {
+	return (uint16_t)CarInfo.MineSumNum;
+}
+uint16_t getCarMineANum(void) {
+	return (uint16_t)CarInfo.MineANum;
+}
+uint16_t getCarMineBNum(void) {
+	return (uint16_t)CarInfo.MineBNum;
+}
+uint16_t getCarMineCNum(void) {
+	return (uint16_t)CarInfo.MineCNum;
+}
+uint16_t getCarMineDNum(void) {
+	return (uint16_t)CarInfo.MineDNum;
 }
 uint16_t getCarPosX(void) {
 	return CarInfo.Pos.x;
@@ -106,15 +137,6 @@ uint16_t getDistanceOfRivalBeacon(int BeaconNo) {
 		return (uint16_t)INVALID_ARG;
 	else
 		return CarInfo.DistanceOfRivalBeacon[BeaconNo];
-}
-uint16_t getParkPosX(void) {
-	return ParkPos.Pos.x;
-}
-uint16_t getParkPosY(void) {
-	return ParkPos.Pos.y;
-}
-struct Position getParkPos(void) {
-	return ParkPos.Pos;
 }
 uint16_t getCarZone(void) {
 	return (uint16_t)CarInfo.Zone;
@@ -146,41 +168,60 @@ void DecodeBasicInfo() {
 }
 void DecodeCarInfo(){
 	CarInfo.Task = (zigbeeReceive[2] & 0x20) >> 5;
-	CarInfo.MineNum = (zigbeeReceive[2] & 0x07);
+	CarInfo.MineSumNum = (zigbeeReceive[7] & 0x0F);
+	CarInfo.MineANum = (zigbeeReceive[8] & 0xF0) >> 4;
+	CarInfo.MineBNum = (zigbeeReceive[8] & 0x0F);
+	CarInfo.MineCNum = (zigbeeReceive[9] & 0xF0) >> 4;
+	CarInfo.MineDNum = (zigbeeReceive[9] & 0x0F);
 	CarInfo.Pos.x = (zigbeeReceive[3] << 8) + zigbeeReceive[4];
 	CarInfo.Pos.y = (zigbeeReceive[5] << 8) + zigbeeReceive[6];
-	CarInfo.IsCarPosValid = (zigbeeReceive[31] & 0x40) >> 6;
-	CarInfo.Zone = (zigbeeReceive[31] & 0x80) >> 7;
-	CarInfo.Score = (zigbeeReceive[32] << 8) + zigbeeReceive[33];
+	CarInfo.IsCarPosValid = (zigbeeReceive[33] & 0x40) >> 6;
+	CarInfo.Zone = (zigbeeReceive[33] & 0x80) >> 7;
+	CarInfo.Score = (zigbeeReceive[34] << 8) + zigbeeReceive[35];
 	for (int i = 0; i < 2; i++) {
-		CarInfo.MineIntensity[i] = zigbeeReceive[7+4*i] << 24 + zigbeeReceive[8 + 4 * i] << 16 + zigbeeReceive[9 + 4 * i] << 8 + zigbeeReceive[10 + 4 * i];
+		CarInfo.MineIntensity[i] = zigbeeReceive[11+4*i] << 24 + zigbeeReceive[12 + 4 * i] << 16 + zigbeeReceive[13 + 4 * i] << 8 + zigbeeReceive[14 + 4 * i];
 	}
 	for (int i = 0; i < 3; i++) {
-		CarInfo.DistanceOfMyBeacon[i] = (zigbeeReceive[15+2*i] << 8) + zigbeeReceive[16+2*i];
+		CarInfo.DistanceOfMyBeacon[i] = (zigbeeReceive[19+2*i] << 8) + zigbeeReceive[20+2*i];
 	}
 	for (int i = 0; i < 3; i++) {
-		CarInfo.DistanceOfRivalBeacon[i] = (zigbeeReceive[21 + 2 * i] << 8) + zigbeeReceive[22 + 2 * i];
+		CarInfo.DistanceOfRivalBeacon[i] = (zigbeeReceive[25 + 2 * i] << 8) + zigbeeReceive[26 + 2 * i];
 	}
-	Carinfo.IsDistanceOfMyBeaconValid[0] = (zigbeeReceive[31] &0x20) >>5 ;
-	Carinfo.IsDistanceOfMyBeaconValid[1] = (zigbeeReceive[31] &0x10) >>4 ;
-	Carinfo.IsDistanceOfMyBeaconValid[2] = (zigbeeReceive[31] &0x08) >>3 ;
-	Carinfo.IsDistanceOfRivalBeaconValid[0] = (zigbeeReceive[31] & 0x04) >> 2;
-	Carinfo.IsDistanceOfRivalBeaconValid[1] = (zigbeeReceive[31] & 0x02) >> 1;
-	Carinfo.IsDistanceOfRivalBeaconValid[2] = (zigbeeReceive[31] & 0x01);
+	Carinfo.IsDistanceOfMyBeaconValid[0] = (zigbeeReceive[33] &0x20) >>5 ;
+	Carinfo.IsDistanceOfMyBeaconValid[1] = (zigbeeReceive[33] &0x10) >>4 ;
+	Carinfo.IsDistanceOfMyBeaconValid[2] = (zigbeeReceive[33] &0x08) >>3 ;
+	Carinfo.IsDistanceOfRivalBeaconValid[0] = (zigbeeReceive[33] & 0x04) >> 2;
+	Carinfo.IsDistanceOfRivalBeaconValid[1] = (zigbeeReceive[33] & 0x02) >> 1;
+	Carinfo.IsDistanceOfRivalBeaconValid[2] = (zigbeeReceive[33] & 0x01);
 }
-void DecodeParkPosInfo() {
-	ParkPos.Pos.x = (zigbeeReceive[27] << 8) + zigbeeReceive[28];
-	ParkPos.Pos.y = (zigbeeReceive[29] << 8) + zigbeeReceive[30];
+void DecodeParkDotInfo() {
+	ParkDotInfo.ParkDotMineType[0] = (zigbeeReceive[31] & 0xC0) >> 6;
+	ParkDotInfo.ParkDotMineType[1] = (zigbeeReceive[31] & 0x30) >> 4;
+	ParkDotInfo.ParkDotMineType[2] = (zigbeeReceive[31] & 0x0C) >> 2;
+	ParkDotInfo.ParkDotMineType[3] = zigbeeReceive[31] & 0x03;
+	ParkDotInfo.ParkDotMineType[4] = (zigbeeReceive[32] & 0xC0) >> 6;
+	ParkDotInfo.ParkDotMineType[5] = (zigbeeReceive[32] & 0x30) >> 4;
+	ParkDotInfo.ParkDotMineType[6] = (zigbeeReceive[32] & 0x0C) >> 2;
+	ParkDotInfo.ParkDotMineType[7] = zigbeeReceive[32] & 0x03;
+}
+void DecodeMyBeaconInfo() {
+	MyBeaconInfo.MyBeaconMineType[0] = (zigbeeReceive[10] & 0xC0) >> 6;
+	MyBeaconInfo.MyBeaconMineType[1] = (zigbeeReceive[10] & 0x30) >> 4;
+	MyBeaconInfo.MyBeaconMineType[2] = (zigbeeReceive[10] & 0x0C) >> 2;
 }
 void DecodeMineInfo(){
 	MineInfo.IsMineIntensityValid[0] = (zigbeeReceive[2] &0x10) >>4 ;
 	MineInfo.IsMineIntensityValid[1] = (zigbeeReceive[2] &0x08) >>3 ;
+	MineInfo.MineArrayType[0] = (zigbeeReceive[7] & 0xC0) >> 6;
+	MineInfo.MineArrayType[1] = (zigbeeReceive[7] & 0x30) >> 4;
 }
+
 void Decode() 
 {
 	DecodeBasicInfo();
 	DecodeCarInfo();
-	DecodeParkPosInfo();
+	DecodeParkDotInfo();
+	DecodeMyBeaconInfo();
 	DecodeMineInfo();
 }
 int receiveIndexMinus(int index_h, int num)
