@@ -839,16 +839,20 @@ namespace EDCHOST22
         #region 通信
         public byte[] PackCarAMessage()//已更新到最新通信协议
         {
-            byte[] message = new byte[36]; //上位机传递多少信息
+            byte[] message = new byte[38]; //上位机传递多少信息
             int messageCnt = 0;
             message[messageCnt++] = (byte)((mGameTime / 1000) >> 8);
             message[messageCnt++] = (byte)(mGameTime / 1000);
             message[messageCnt++] = (byte)((((byte)mGameStage << 6) & 0xC0) | (((byte)CarA.mTaskState << 5) & 0x20) |
-                (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08) | ((byte)CarA.mMineState & 0x07));
+                (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08));
             message[messageCnt++] = (byte)(CarA.mTransPos.x >> 8);
             message[messageCnt++] = (byte)(CarA.mTransPos.x);
             message[messageCnt++] = (byte)(CarA.mTransPos.y >> 8);
             message[messageCnt++] = (byte)(CarA.mTransPos.y);
+            message[messageCnt++] = (byte)((((byte)mMineArray[0].Type << 6) & 0xC0) | (((byte)mMineArray[1].Type << 4) & 0x30) | ((byte)CarA.mMineStateSum()));
+            message[messageCnt++] = (byte)((((byte)CarA.mMineState[(int)MineType.A] << 4) & 0xF0)| ((byte)CarA.mMineState[(int)MineType.B]));
+            message[messageCnt++] = (byte)((((byte)CarA.mMineState[(int)MineType.C] << 4) & 0xF0) | ((byte)CarA.mMineState[(int)MineType.D]));
+            message[messageCnt++] = (byte)((((byte)mBeacon.CarABeaconMineType[0] << 6) & 0xC0) | (((byte)mBeacon.CarABeaconMineType[1] << 4) & 0x30) | (((byte)mBeacon.CarABeaconMineType[2] << 2) & 0x0C));
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarA.mPos) >> 24);
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarA.mPos) >> 16);
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarA.mPos) >> 8);
@@ -869,10 +873,8 @@ namespace EDCHOST22
             message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[1], CarA.mPos)));
             message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[2], CarA.mPos)) >> 8);
             message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[2], CarA.mPos)));
-            message[messageCnt++] = (byte)(mParkPoint.x >> 8);
-            message[messageCnt++] = (byte)(mParkPoint.x);
-            message[messageCnt++] = (byte)(mParkPoint.y >> 8);
-            message[messageCnt++] = (byte)(mParkPoint.y);
+            message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[0]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[1]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[2]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[3]));
+            message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[4]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[5]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[6]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[7]));
             message[messageCnt++] = (byte)(((CarA.mIsInMaze << 7) & 0x80)
                 | ((((mGameState == GameState.NORMAL) && ((mGameStage == GameStage.FIRST_A) || ((mGameStage == GameStage.SECOND_A) && (CarA.mIsInMaze != 1))) ? 1 : 0) << 6) & 0x40)
                 | ((((0 < mBeacon.CarABeaconNum) ? 1 : 0) << 5) & 0x20)
@@ -889,7 +891,7 @@ namespace EDCHOST22
         }
         public byte[] PackCarBMessage()//已更新到最新通信协议
         {
-            byte[] message = new byte[36]; //上位机传递多少信息
+            byte[] message = new byte[38]; //上位机传递多少信息
             int messageCnt = 0;
             message[messageCnt++] = (byte)((mGameTime / 1000) >> 8);
             message[messageCnt++] = (byte)(mGameTime / 1000);
@@ -899,6 +901,10 @@ namespace EDCHOST22
             message[messageCnt++] = (byte)(CarB.mTransPos.x);
             message[messageCnt++] = (byte)(CarB.mTransPos.y >> 8);
             message[messageCnt++] = (byte)(CarB.mTransPos.y);
+            message[messageCnt++] = (byte)((((byte)mMineArray[0].Type << 6) & 0xC0) | (((byte)mMineArray[1].Type << 4) & 0x30) | ((byte)CarB.mMineStateSum()));
+            message[messageCnt++] = (byte)((((byte)CarB.mMineState[(int)MineType.A] << 4) & 0xF0) | ((byte)CarB.mMineState[(int)MineType.B]));
+            message[messageCnt++] = (byte)((((byte)CarB.mMineState[(int)MineType.C] << 4) & 0xF0) | ((byte)CarB.mMineState[(int)MineType.D]));
+            message[messageCnt++] = (byte)((((byte)mBeacon.CarBBeaconMineType[0] << 6) & 0xC0) | (((byte)mBeacon.CarBBeaconMineType[1] << 4) & 0x30) | (((byte)mBeacon.CarBBeaconMineType[2] << 2) & 0x0C));
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarB.mPos) >> 24);
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarB.mPos) >> 16);
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarB.mPos) >> 8);
@@ -919,10 +925,8 @@ namespace EDCHOST22
             message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[1], CarB.mPos)));
             message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[2], CarB.mPos)) >> 8);
             message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[2], CarB.mPos)));
-            message[messageCnt++] = (byte)(mParkPoint.x >> 8);
-            message[messageCnt++] = (byte)(mParkPoint.x);
-            message[messageCnt++] = (byte)(mParkPoint.y >> 8);
-            message[messageCnt++] = (byte)(mParkPoint.y);
+            message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[0]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[1]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[2]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[3]));
+            message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[4]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[5]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[6]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[7]));
             message[messageCnt++] = (byte)(((CarB.mIsInMaze << 7) & 0x80)
                 | ((((mGameState == GameState.NORMAL) && ((mGameStage == GameStage.FIRST_B) || ((mGameStage == GameStage.SECOND_B) && (CarB.mIsInMaze != 1))) ? 1 : 0) << 6) & 0x40)
                 | ((((0 < mBeacon.CarBBeaconNum) ? 1 : 0) << 5) & 0x20)
