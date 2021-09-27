@@ -896,7 +896,7 @@ namespace EDCHOST22
             message[messageCnt++] = (byte)((mGameTime / 1000) >> 8);
             message[messageCnt++] = (byte)(mGameTime / 1000);
             message[messageCnt++] = (byte)((((byte)mGameStage << 6) & 0xC0) | (((byte)CarB.mTaskState << 5) & 0x20) |
-                (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08) | ((byte)CarB.mMineState & 0x07));
+                (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08));
             message[messageCnt++] = (byte)(CarB.mTransPos.x >> 8);
             message[messageCnt++] = (byte)(CarB.mTransPos.x);
             message[messageCnt++] = (byte)(CarB.mTransPos.y >> 8);
