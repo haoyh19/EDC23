@@ -31,7 +31,6 @@ namespace EDCHOST22
         public FileStream FoulTimeFS;   // 犯规记录
         public int mLastOnBeaconTime;   // 上一次触碰信标的时间，防止多次重复判断撞信标
         public MineGenerator mMineGenerator;    // 用于生成金矿序列
-        //public Dot mParkPoint;            // 第一回合的随机停车点
         public Mine[] mMineArray;        // 当前在场上的矿的数组
         public int[] mMineInMaze;          // 两矿是否在场上（1在场上，0已被收集运走）
         public Dot[] mParkDots;             // 场上停车点的坐标数组
@@ -54,7 +53,6 @@ namespace EDCHOST22
             mLastOnBeaconTime = -10;
             Debug.WriteLine("Game构造函数FIRST_A执行完毕");
             mMineGenerator = new MineGenerator();
-            //mParkPoint = Court.ParkID2Dot(mMineGenerator.GetParkPoint());
             mMineArray = mMineGenerator.GetStage1Mine();
             mMineInMaze = new int[MineGenerator.COURTMINENUM];
             mIsOverTime = 0;
@@ -724,6 +722,8 @@ namespace EDCHOST22
                 mGameTime = 0;
                 mPrevTime = GetCurrentTime();
                 mSecCount = 0;
+                CarA.ClearMineState();
+                CarB.ClearMineState();
                 Debug.WriteLine("start");
             }
         }
@@ -796,7 +796,6 @@ namespace EDCHOST22
             mGameTime = 0;
             mLastOnBeaconTime = -10;
             mMineGenerator = new MineGenerator();
-            //mParkPoint = Court.ParkID2Dot(mMineGenerator.GetParkPoint());
             mMineArray = mMineGenerator.GetStage1Mine();
             mMineInMaze = new int[MineGenerator.COURTMINENUM];
             mIsOverTime = 0;
