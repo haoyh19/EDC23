@@ -276,15 +276,15 @@ namespace EDCHOST22
             byte[] Message = game.PackCarAMessage();
 
             // 从小车接收的信息
-            byte[] TypeFromCar = new byte[2];
+            byte[] TypeFromCar = new byte[1];
 
             // 通过串口1发送给A车
             if (serial1 != null && serial1.IsOpen)
             {
                 serial1.Write(Message, 0, 70);
-                serial1.Read(TypeFromCar, 0, 2);
+                serial1.Read(TypeFromCar, 0, 1);
             }
-            CurrentBeaconType = (MineType) (TypeFromCar[1] + 2 * TypeFromCar[0]);
+            CurrentBeaconType = (MineType)TypeFromCar[0];
             ShowMessage(Message);
             validPorts = SerialPort.GetPortNames();
         }
@@ -296,15 +296,15 @@ namespace EDCHOST22
             byte[] Message = game.PackCarBMessage();
 
             // 从小车接收的信息
-            byte[] TypeFromCar = new byte[2];
+            byte[] TypeFromCar = new byte[1];
 
             // 通过串口2发送给B车
             if (serial2 != null && serial2.IsOpen)
             {
                 serial2.Write(Message, 0, 70);
-                serial1.Read(TypeFromCar, 0, 2);
+                serial1.Read(TypeFromCar, 0, 1);
             }
-            CurrentBeaconType = (MineType)(TypeFromCar[1] + 2 * TypeFromCar[0]);
+            CurrentBeaconType = (MineType)TypeFromCar[0];
             ShowMessage(Message);
             validPorts = SerialPort.GetPortNames();
         }
