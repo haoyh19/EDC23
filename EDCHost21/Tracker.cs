@@ -413,8 +413,8 @@ namespace EDCHOST22
                 Icon_BeaconAA, Icon_BeaconAB, Icon_BeaconAC, Icon_BeaconAD,
                 Icon_BeaconBA, Icon_BeaconBB, Icon_BeaconBC, Icon_BeaconBD,
                 Icon_ParkA, Icon_ParkB, Icon_ParkC, Icon_ParkD;
-            Icon_CarA = new Mat(@"icon\\CARA.png", ImreadModes.Color);
-            Icon_CarB = new Mat(@"icon\\CARB.png", ImreadModes.Color);
+            Icon_CarA = new Mat(@"icon\\CarA.png", ImreadModes.Color);
+            Icon_CarB = new Mat(@"icon\\CarB.png", ImreadModes.Color);
             //Icon_Package = new Mat(@"icon\\Package.png", ImreadModes.Color);
             Icon_MineA = new Mat(@"icon\\MineA.png", ImreadModes.Color);
             Icon_MineB = new Mat(@"icon\\MineB.png", ImreadModes.Color);
@@ -428,7 +428,7 @@ namespace EDCHOST22
             Icon_BeaconBB = new Mat(@"icon\\BeaconBB.png", ImreadModes.Color);
             Icon_BeaconBC = new Mat(@"icon\\BeaconBC.png", ImreadModes.Color);
             Icon_BeaconBD = new Mat(@"icon\\BeaconBD.png", ImreadModes.Color);
-            Icon_ParkA = new Mat(@"icon\\Parking.png", ImreadModes.Color);
+            Icon_ParkA = new Mat(@"icon\\ParkingA.png", ImreadModes.Color);
             Icon_ParkB = new Mat(@"icon\\ParkingB.png", ImreadModes.Color);
             Icon_ParkC = new Mat(@"icon\\ParkingC.png", ImreadModes.Color);
             Icon_ParkD = new Mat(@"icon\\ParkingD.png", ImreadModes.Color);
