@@ -187,12 +187,12 @@ void DecodeCarInfo(){
 	for (int i = 0; i < 3; i++) {
 		CarInfo.DistanceOfRivalBeacon[i] = (zigbeeReceive[25 + 2 * i] << 8) + zigbeeReceive[26 + 2 * i];
 	}
-	Carinfo.IsDistanceOfMyBeaconValid[0] = (zigbeeReceive[33] &0x20) >>5 ;
-	Carinfo.IsDistanceOfMyBeaconValid[1] = (zigbeeReceive[33] &0x10) >>4 ;
-	Carinfo.IsDistanceOfMyBeaconValid[2] = (zigbeeReceive[33] &0x08) >>3 ;
-	Carinfo.IsDistanceOfRivalBeaconValid[0] = (zigbeeReceive[33] & 0x04) >> 2;
-	Carinfo.IsDistanceOfRivalBeaconValid[1] = (zigbeeReceive[33] & 0x02) >> 1;
-	Carinfo.IsDistanceOfRivalBeaconValid[2] = (zigbeeReceive[33] & 0x01);
+	CarInfo.IsDistanceOfMyBeaconValid[0] = (zigbeeReceive[33] &0x20) >>5 ;
+	CarInfo.IsDistanceOfMyBeaconValid[1] = (zigbeeReceive[33] &0x10) >>4 ;
+	CarInfo.IsDistanceOfMyBeaconValid[2] = (zigbeeReceive[33] &0x08) >>3 ;
+	CarInfo.IsDistanceOfRivalBeaconValid[0] = (zigbeeReceive[33] & 0x04) >> 2;
+	CarInfo.IsDistanceOfRivalBeaconValid[1] = (zigbeeReceive[33] & 0x02) >> 1;
+	CarInfo.IsDistanceOfRivalBeaconValid[2] = (zigbeeReceive[33] & 0x01);
 }
 void DecodeParkDotInfo() {
 	ParkDotInfo.ParkDotMineType[0] = (zigbeeReceive[31] & 0xC0) >> 6;
