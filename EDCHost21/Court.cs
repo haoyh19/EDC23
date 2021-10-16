@@ -16,11 +16,9 @@ namespace EDCHOST22
         public const int COINCIDE_ERR_DIST_CM = 10;  // 判定小车到达某点允许的最大误差距离（碰撞半径）
         public const int MINE_LOWERDIST_CM = 20;        // 金矿间的最小距离
         public const int TOTAL_PARKING_AREA = 8;     // 停车点的总个数
-<<<<<<< HEAD
-        public const int MAX_MINE_DEPTH = 50;       //金矿的最深深度
-=======
         public const int MAX_MINE_DEPTH = 200;  // 矿的最大深度
->>>>>>> 11f15e213afd16e4479a4fb5891e2ded7f34da1c
+        public const int MIN_MINE_DEPTH = 1;    // 矿的最小深度
+
         /* 停车点编号方式：
          *      0 1 2
          *      7   3
@@ -49,6 +47,18 @@ namespace EDCHOST22
             {
                 return new Dot(HALF_BORDER_CM, HALF_BORDER_CM + DISTANCE_PARKIN_AREA);
             }
+        }
+
+        // 返回所有停车点组成的点集Dots
+        static public Dot[] GetParkDots()
+        {
+            Dot[] ParkDots = new Dot[TOTAL_PARKING_AREA];
+            for (int i = 0; i < TOTAL_PARKING_AREA; i++)
+            {
+                Dot temp = ParkID2Dot(i);
+                ParkDots[i] = new Dot(temp.x, temp.y);
+            }
+            return ParkDots;
         }
     }
 }

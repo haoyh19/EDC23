@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -31,10 +31,11 @@ namespace EDCHOST22
         public FileStream FoulTimeFS;   // 犯规记录
         public int mLastOnBeaconTime;   // 上一次触碰信标的时间，防止多次重复判断撞信标
         public MineGenerator mMineGenerator;    // 用于生成金矿序列
-        public Dot mParkPoint;            // 第一回合的随机停车点
         public Mine[] mMineArray;        // 当前在场上的矿的数组
         public int[] mMineInMaze;          // 两矿是否在场上（1在场上，0已被收集运走）
-        public int mIsOverTime;             
+        public Dot[] mParkDots;             // 场上停车点的坐标数组
+        public int mIsOverTime;             // 是否是加时赛
+        public int mSecCount;             // 数到1sec
 
 
         // 构造一个新的Game类，默认为CampA是先上半场上一阶段进行
@@ -52,14 +53,15 @@ namespace EDCHOST22
             mLastOnBeaconTime = -10;
             Debug.WriteLine("Game构造函数FIRST_A执行完毕");
             mMineGenerator = new MineGenerator();
-            mParkPoint = Court.ParkID2Dot(mMineGenerator.GetParkPoint());
             mMineArray = mMineGenerator.GetStage1Mine();
-            mMineInMaze = new int[2];
+            mMineInMaze = new int[MineGenerator.COURTMINENUM];
             mIsOverTime = 0;
-            for (int i = 0; i < mMineInMaze.Length; i++)
+            for (int i = 0; i < MineGenerator.COURTMINENUM; i++)
             {
                 mMineInMaze[i] = 1;
             }
+            mSecCount = 0;
+            mParkDots = Court.GetParkDots();
         }
 
         #region 辅助函数
@@ -226,14 +228,17 @@ namespace EDCHOST22
                 if (mGameStage == GameStage.FIRST_A)
                 {
                     CarA.mTransPos = CarA.mPos;
+                    CarA.mRightPos = 1;
                 }
                 else if (mGameStage == GameStage.SECOND_A && CarA.mIsInMaze != 1)
                 {
                     CarA.mTransPos = CarA.mPos;
+                    CarA.mRightPos = 1;
                 }
                 else
                 {
                     CarA.mTransPos.SetInfo(-10, -10);
+                    CarA.mRightPos = 0;
                 }
             }
         }
@@ -244,14 +249,17 @@ namespace EDCHOST22
                 if (mGameStage == GameStage.FIRST_B)
                 {
                     CarB.mTransPos = CarB.mPos;
+                    CarB.mRightPos = 1;
                 }
                 else if (mGameStage == GameStage.SECOND_B && CarB.mIsInMaze != 1)
                 {
                     CarB.mTransPos = CarB.mPos;
+                    CarB.mRightPos = 1;
                 }
                 else
                 {
                     CarB.mTransPos.SetInfo(-10, -10);
+                    CarB.mRightPos = 0;
                 }
             }
         }
@@ -302,7 +310,7 @@ namespace EDCHOST22
                     int flag = -1;
                     for (int i = 0; i < MINE_COUNT_MAX; i++)
                     {
-                        if (Dot.InCollisionZone(CarA.mPos, mMineArray[i].Pos))
+                        if (Dot.InCollisionZone(CarA.mPos, mMineArray[i].Pos) && mMineInMaze[i] == 1)
                         {
                             flag = i;
                             break;
@@ -324,7 +332,7 @@ namespace EDCHOST22
                     int flag = -1;
                     for (int i = 0; i < MINE_COUNT_MAX; i++)
                     {
-                        if (Dot.InCollisionZone(CarA.mPos, mMineArray[i].Pos))
+                        if (Dot.InCollisionZone(CarA.mPos, mMineArray[i].Pos) && mMineInMaze[i] == 1)
                         {
                             flag = i;
                             break;
@@ -333,8 +341,8 @@ namespace EDCHOST22
                     if (flag != -1)
                     {
                         mMineInMaze[flag] = 0;
-                        CarA.AddMineLoad(0);
-                        CarA.AddMineState();
+                        CarA.AddMineLoad(1, mMineArray[flag].Type);
+                        CarA.AddMineState(mMineArray[flag].Type);
                     }
                 }
                 else
@@ -356,7 +364,7 @@ namespace EDCHOST22
                     int flag = -1;
                     for (int i = 0; i < MINE_COUNT_MAX; i++)
                     {
-                        if (Dot.InCollisionZone(CarB.mPos, mMineArray[i].Pos))
+                        if (Dot.InCollisionZone(CarB.mPos, mMineArray[i].Pos) && mMineInMaze[i] == 1)
                         {
                             flag = i;
                             break;
@@ -378,7 +386,7 @@ namespace EDCHOST22
                     int flag = -1;
                     for (int i = 0; i < MINE_COUNT_MAX; i++)
                     {
-                        if (Dot.InCollisionZone(CarB.mPos, mMineArray[i].Pos))
+                        if (Dot.InCollisionZone(CarB.mPos, mMineArray[i].Pos) && mMineInMaze[i] == 1)
                         {
                             flag = i;
                             break;
@@ -387,8 +395,8 @@ namespace EDCHOST22
                     if (flag != -1)
                     {
                         mMineInMaze[flag] = 0;
-                        CarB.AddMineLoad(0);
-                        CarB.AddMineState();
+                        CarB.AddMineLoad(1, mMineArray[flag].Type);
+                        CarB.AddMineState(mMineArray[flag].Type);
                     }
                 }
                 else
@@ -405,9 +413,14 @@ namespace EDCHOST22
             {
                 if (mGameStage == GameStage.FIRST_A)
                 {
-                    if (CarA.mMineState == MINE_COUNT_MAX &&
-                        Dot.InCollisionZone(CarA.mPos, mParkPoint))
+                    if (CarA.mMineStateSum() == MINE_COUNT_MAX &&
+                        Dot.InCollisionZones(CarA.mPos, mParkDots))
                     {
+                        mSecCount++;
+                    }
+                    if (mSecCount >= 9)
+                    {
+                        mSecCount = 0;
                         CarA.AddMineUnload(0);
                         CarA.ClearMineState();
                         if (mGameTime < 60000)
@@ -418,16 +431,39 @@ namespace EDCHOST22
                 }
                 else if (mGameStage == GameStage.SECOND_A)
                 {
-                    Dot[] beaconList = new Dot[mBeacon.CarABeaconNum];
+                    int BeaconFlag = -1;
                     for (int i = 0; i < mBeacon.CarABeaconNum; i++)
                     {
-                        beaconList[i] = mBeacon.CarABeacon[i];
+                        if (Dot.InCollisionZone(CarA.mPos, mBeacon.CarABeacon[i]))
+                        {
+                            BeaconFlag = i;
+                            break;
+                        }
                     }
-                    if (CarA.IsMineStateFull() &&
-                        Dot.InCollisionZones(CarA.mPos, beaconList))
+                    if (BeaconFlag == -1)
                     {
-                        CarA.AddMineUnload(1);
-                        CarA.ClearMineState();
+                        int ParkFlag = -1;
+                        for (int i = 0; i < Court.TOTAL_PARKING_AREA; i++)
+                        {
+                            if (Dot.InCollisionZone(CarA.mPos, mParkDots[i]))
+                            {
+                                ParkFlag = i;
+                                break;
+                            }
+                        }
+                        if (ParkFlag != -1 && CarA.mMineState[(int)mMineGenerator.ParkType[ParkFlag]] != 0)
+                        {
+                            CarA.AddMineUnload(1, mMineGenerator.ParkType[ParkFlag]);
+                            CarA.ClearMineTypeState(mMineGenerator.ParkType[ParkFlag]);
+                        }
+                    }
+                    else
+                    {
+                        if (CarA.mMineState[(int)mBeacon.CarABeaconMineType[BeaconFlag]] != 0)
+                        {
+                            CarA.AddMineUnload(1, mMineGenerator.ParkType[BeaconFlag]);
+                            CarA.ClearMineTypeState(mMineGenerator.ParkType[BeaconFlag]);
+                        }
                     }
                 }
                 else
@@ -442,9 +478,14 @@ namespace EDCHOST22
             {
                 if (mGameStage == GameStage.FIRST_B)
                 {
-                    if (CarB.mMineState == MINE_COUNT_MAX &&
-                        Dot.InCollisionZone(CarB.mPos, mParkPoint))
+                    if (CarB.mMineStateSum() == MINE_COUNT_MAX &&
+                        Dot.InCollisionZones(CarB.mPos, mParkDots))
                     {
+                        mSecCount++;
+                    }
+                    if (mSecCount >= 9)
+                    {
+                        mSecCount = 0;
                         CarB.AddMineUnload(0);
                         CarB.ClearMineState();
                         if (mGameTime < 60000)
@@ -455,16 +496,39 @@ namespace EDCHOST22
                 }
                 else if (mGameStage == GameStage.SECOND_B)
                 {
-                    Dot[] beaconList = new Dot[mBeacon.CarBBeaconNum];
+                    int BeaconFlag = -1;
                     for (int i = 0; i < mBeacon.CarBBeaconNum; i++)
                     {
-                        beaconList[i] = mBeacon.CarBBeacon[i];
+                        if (Dot.InCollisionZone(CarB.mPos, mBeacon.CarBBeacon[i]))
+                        {
+                            BeaconFlag = i;
+                            break;
+                        }
                     }
-                    if (CarB.IsMineStateFull() &&
-                        Dot.InCollisionZones(CarB.mPos, beaconList))
+                    if (BeaconFlag == -1)
                     {
-                        CarB.AddMineUnload(1);
-                        CarB.ClearMineState();
+                        int ParkFlag = -1;
+                        for (int i = 0; i < Court.TOTAL_PARKING_AREA; i++)
+                        {
+                            if (Dot.InCollisionZone(CarB.mPos, mParkDots[i]))
+                            {
+                                ParkFlag = i;
+                                break;
+                            }
+                        }
+                        if (ParkFlag != -1 && CarB.mMineState[(int)mMineGenerator.ParkType[ParkFlag]] != 0)
+                        {
+                            CarB.AddMineUnload(1, mMineGenerator.ParkType[ParkFlag]);
+                            CarB.ClearMineTypeState(mMineGenerator.ParkType[ParkFlag]);
+                        }
+                    }
+                    else
+                    {
+                        if (CarB.mMineState[(int)mBeacon.CarBBeaconMineType[BeaconFlag]] != 0)
+                        {
+                            CarB.AddMineUnload(1, mMineGenerator.ParkType[BeaconFlag]);
+                            CarB.ClearMineTypeState(mMineGenerator.ParkType[BeaconFlag]);
+                        }
                     }
                 }
                 else
@@ -507,7 +571,7 @@ namespace EDCHOST22
                 {
                     flag += mMineInMaze[i];
                 }
-                if (mGameTime > 60000 || flag == 0)
+                if (mGameTime > 60000 || (flag == 0 && CarA.mMineStateSum() == 0))
                 {
                     mGameState = GameState.UNSTART;
                     mGameStage++;
@@ -535,7 +599,7 @@ namespace EDCHOST22
                 {
                     flag += mMineInMaze[i];
                 }
-                if (mGameTime > 60000 || flag == 0)
+                if (mGameTime > 60000 || (flag == 0 && CarB.mMineStateSum() == 0))
                 {
                     mGameState = GameState.UNSTART;
                     mMineGenerator.GenerateStage2(mBeacon);
@@ -640,7 +704,6 @@ namespace EDCHOST22
                     UpdateCarBTransPos();
                 }
                 CheckNextStage();
-
             }
         }
 
@@ -658,12 +721,15 @@ namespace EDCHOST22
                 mGameState = GameState.NORMAL;
                 mGameTime = 0;
                 mPrevTime = GetCurrentTime();
+                mSecCount = 0;
+                CarA.ClearMineState();
+                CarB.ClearMineState();
                 Debug.WriteLine("start");
             }
         }
 
         // 设置信标
-        public void SetBeacon()
+        public void SetBeacon(MineType type)
         {
             if (mGameState == GameState.END || mGameState == GameState.PAUSE || mGameState == GameState.UNSTART ||
                 mGameStage == GameStage.END || mGameStage == GameStage.SECOND_A || mGameStage == GameStage.SECOND_B)
@@ -672,7 +738,7 @@ namespace EDCHOST22
             }
             if (UpperCamp == Camp.A && mGameStage == GameStage.FIRST_A)
             {
-                if (mBeacon.CarABeaconNum >= mBeacon.MaxBeaconNum)
+                if (mBeacon.CarABeaconNum >= Beacon.MAX_BEACON_NUM)
                 {
                     return;
                 }
@@ -680,12 +746,12 @@ namespace EDCHOST22
                 {
                     return;
                 }
-                mBeacon.CarAAddBeacon(CarA.mPos);
+                mBeacon.CarAAddBeacon(CarA.mPos, type);
                 CarA.AddBeaconCount();
             }
             else if (UpperCamp == Camp.B && mGameStage == GameStage.FIRST_B)
             {
-                if (mBeacon.CarBBeaconNum >= mBeacon.MaxBeaconNum)
+                if (mBeacon.CarBBeaconNum >= Beacon.MAX_BEACON_NUM)
                 {
                     return;
                 }
@@ -693,7 +759,7 @@ namespace EDCHOST22
                 {
                     return;
                 }
-                mBeacon.CarBAddBeacon(CarB.mPos);
+                mBeacon.CarBAddBeacon(CarB.mPos, type);
                 CarB.AddBeaconCount();
             }
         }
@@ -730,15 +796,16 @@ namespace EDCHOST22
             mGameTime = 0;
             mLastOnBeaconTime = -10;
             mMineGenerator = new MineGenerator();
-            mParkPoint = Court.ParkID2Dot(mMineGenerator.GetParkPoint());
             mMineArray = mMineGenerator.GetStage1Mine();
-            mMineInMaze = new int[2];
+            mMineInMaze = new int[MineGenerator.COURTMINENUM];
             mIsOverTime = 0;
-            for (int i = 0; i < mMineInMaze.Length; i++)
+            for (int i = 0; i < MineGenerator.COURTMINENUM; i++)
             {
                 mMineInMaze[i] = 1;
             }
+            mSecCount= 0;
             Debug.WriteLine("Game构造函数FIRST_A执行完毕");
+            mParkDots = Court.GetParkDots();
         }
 
         // 进行加时赛
@@ -768,166 +835,107 @@ namespace EDCHOST22
         #endregion
 
 
-        #region 通信（未修改）
-
-
-        // 未修改
+        #region 通信
         public byte[] PackCarAMessage()//已更新到最新通信协议
         {
-            byte[] message = new byte[70]; //上位机传递多少信息
+            byte[] message = new byte[38]; //上位机传递多少信息
             int messageCnt = 0;
-            message[messageCnt++] = (byte)((mGameTime/1000) >> 8);
-            message[messageCnt++] = (byte)(mGameTime/1000);
-            message[messageCnt++] = (byte)( (((byte)gameState << 6) & 0xC0 ) | (((byte)CarA.mTaskState << 5) & 0x20 ) | 
-                (((byte)CarA.mIsWithPassenger << 3) & 0x08) | ((byte)mFlood.num & 0x07));
-            message[messageCnt++] = (byte)CarA.mTransPos.x;
-            message[messageCnt++] = (byte)CarA.mTransPos.y;
-            message[messageCnt++] = (byte)mFlood.dot1.x;
-            message[messageCnt++] = (byte)mFlood.dot1.y;
-            message[messageCnt++] = (byte)mFlood.dot2.x;
-            message[messageCnt++] = (byte)mFlood.dot2.y;
-            message[messageCnt++] = (byte)mFlood.dot3.x;
-            message[messageCnt++] = (byte)mFlood.dot3.y;
-            message[messageCnt++] = (byte)mFlood.dot4.x;
-            message[messageCnt++] = (byte)mFlood.dot4.y;
-            message[messageCnt++] = (byte)mFlood.dot5.x;
-            message[messageCnt++] = (byte)mFlood.dot5.y;
-            message[messageCnt++] = (byte)curPsg.Start_Dot.x;
-            message[messageCnt++] = (byte)curPsg.Start_Dot.y;
-            message[messageCnt++] = (byte)curPsg.End_Dot.x;
-            message[messageCnt++] = (byte)curPsg.End_Dot.y;
-            message[messageCnt++] = (byte)((((byte)currentPkgList[0].IsPicked << 7) & 0x80) | (((byte)currentPkgList[1].IsPicked << 6) & 0x40) 
-                | (((byte)currentPkgList[2].IsPicked << 5) & 0x20)
-                | (((byte)currentPkgList[3].IsPicked << 4) & 0x10) | (((byte)currentPkgList[4].IsPicked << 3) & 0x08) |
-                (((byte)currentPkgList[5].IsPicked << 2)&0x04) | (((byte)CarA.mIsInMaze << 1) & 0x02) | ((byte)CarA.mRightPos & 0x01));
-            message[messageCnt++] = (byte)currentPkgList[0].mPos.x;
-            message[messageCnt++] = (byte)currentPkgList[0].mPos.y;
-            message[messageCnt++] = (byte)currentPkgList[1].mPos.x;
-            message[messageCnt++] = (byte)currentPkgList[1].mPos.y;
-            message[messageCnt++] = (byte)currentPkgList[2].mPos.x;
-            message[messageCnt++] = (byte)currentPkgList[2].mPos.y;
-            message[messageCnt++] = (byte)currentPkgList[3].mPos.x;
-            message[messageCnt++] = (byte)currentPkgList[3].mPos.y;
-            message[messageCnt++] = (byte)currentPkgList[4].mPos.x;
-            message[messageCnt++] = (byte)currentPkgList[4].mPos.y;
-            message[messageCnt++] = (byte)currentPkgList[5].mPos.x;
-            message[messageCnt++] = (byte)currentPkgList[5].mPos.y;
+            message[messageCnt++] = (byte)((mGameTime / 1000) >> 8);
+            message[messageCnt++] = (byte)(mGameTime / 1000);
+            message[messageCnt++] = (byte)((((byte)mGameStage << 6) & 0xC0) | (((byte)CarA.mTaskState << 5) & 0x20) |
+                (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08));
+            message[messageCnt++] = (byte)(CarA.mTransPos.x >> 8);
+            message[messageCnt++] = (byte)(CarA.mTransPos.x);
+            message[messageCnt++] = (byte)(CarA.mTransPos.y >> 8);
+            message[messageCnt++] = (byte)(CarA.mTransPos.y);
+            message[messageCnt++] = (byte)((((byte)mMineArray[0].Type << 6) & 0xC0) | (((byte)mMineArray[1].Type << 4) & 0x30) | ((byte)CarA.mMineStateSum()));
+            message[messageCnt++] = (byte)((((byte)CarA.mMineState[(int)MineType.A] << 4) & 0xF0)| ((byte)CarA.mMineState[(int)MineType.B]));
+            message[messageCnt++] = (byte)((((byte)CarA.mMineState[(int)MineType.C] << 4) & 0xF0) | ((byte)CarA.mMineState[(int)MineType.D]));
+            message[messageCnt++] = (byte)((((byte)mBeacon.CarABeaconMineType[0] << 6) & 0xC0) | (((byte)mBeacon.CarABeaconMineType[1] << 4) & 0x30) | (((byte)mBeacon.CarABeaconMineType[2] << 2) & 0x0C));
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarA.mPos) >> 24);
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarA.mPos) >> 16);
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarA.mPos) >> 8);
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarA.mPos));
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[1], CarA.mPos) >> 24);
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[1], CarA.mPos) >> 16);
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[1], CarA.mPos) >> 8);
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[1], CarA.mPos));
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[0], CarA.mPos)) >> 8);
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[0], CarA.mPos)));
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[1], CarA.mPos)) >> 8);
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[1], CarA.mPos)));
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[2], CarA.mPos)) >> 8);
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[2], CarA.mPos)));
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[0], CarA.mPos)) >> 8);
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[0], CarA.mPos)));
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[1], CarA.mPos)) >> 8);
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[1], CarA.mPos)));
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[2], CarA.mPos)) >> 8);
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[2], CarA.mPos)));
+            message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[0]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[1]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[2]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[3]));
+            message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[4]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[5]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[6]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[7]));
+            message[messageCnt++] = (byte)(((CarA.mIsInMaze << 7) & 0x80)
+                | ((((mGameState == GameState.NORMAL) && ((mGameStage == GameStage.FIRST_A) || ((mGameStage == GameStage.SECOND_A) && (CarA.mIsInMaze != 1))) ? 1 : 0) << 6) & 0x40)
+                | ((((0 < mBeacon.CarABeaconNum) ? 1 : 0) << 5) & 0x20)
+                | ((((1 < mBeacon.CarABeaconNum) ? 1 : 0) << 4) & 0x10)
+                | ((((2 < mBeacon.CarABeaconNum) ? 1 : 0) << 3) & 0x08)
+                | ((((0 < mBeacon.CarBBeaconNum) ? 1 : 0) << 2) & 0x04)
+                | ((((1 < mBeacon.CarBBeaconNum) ? 1 : 0) << 1) & 0x02)
+                | (((2 < mBeacon.CarBBeaconNum) ? 1 : 0) & 0x01));
             message[messageCnt++] = (byte)(CarA.MyScore >> 8);
-            message[messageCnt++] = (byte)CarA.MyScore;
-            message[messageCnt++] = (byte)CarA.mRescueCount;
-            message[messageCnt++] = (byte)CarA.mPkgCount;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[0].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[0].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[0].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[0].w2.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[1].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[1].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[1].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[1].w2.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[2].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[2].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[2].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[2].w2.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[3].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[3].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[3].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[3].w2.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[4].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[4].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[4].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[4].w2.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[5].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[5].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[5].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[5].w2.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[6].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[6].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[6].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[6].w2.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[7].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[7].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[7].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[7].w2.y;
+            message[messageCnt++] = (byte)(CarA.MyScore);
             message[messageCnt++] = 0x0D;
             message[messageCnt++] = 0x0A;
             return message;
         }
         public byte[] PackCarBMessage()//已更新到最新通信协议
         {
-            byte[] message = new byte[70]; //上位机传递多少信息
+            byte[] message = new byte[38]; //上位机传递多少信息
             int messageCnt = 0;
-            message[messageCnt++] = (byte)((mGameTime/1000) >> 8);
-            message[messageCnt++] = (byte)(mGameTime/1000);
-            message[messageCnt++] = (byte)((((byte)gameState << 6) & 0xC0) | (((byte)CarB.mTaskState << 5) & 0x20) |
-                (((byte)CarB.mIsWithPassenger << 3) & 0x08) | ((byte)mFlood.num & 0x07));
-            message[messageCnt++] = (byte)CarB.mTransPos.x;
-            message[messageCnt++] = (byte)CarB.mTransPos.y;
-            message[messageCnt++] = (byte)mFlood.dot1.x;
-            message[messageCnt++] = (byte)mFlood.dot1.y;
-            message[messageCnt++] = (byte)mFlood.dot2.x;
-            message[messageCnt++] = (byte)mFlood.dot2.y;
-            message[messageCnt++] = (byte)mFlood.dot3.x;
-            message[messageCnt++] = (byte)mFlood.dot3.y;
-            message[messageCnt++] = (byte)mFlood.dot4.x;
-            message[messageCnt++] = (byte)mFlood.dot4.y;
-            message[messageCnt++] = (byte)mFlood.dot5.x;
-            message[messageCnt++] = (byte)mFlood.dot5.y;
-            message[messageCnt++] = (byte)curPsg.Start_Dot.x;
-            message[messageCnt++] = (byte)curPsg.Start_Dot.y;
-            message[messageCnt++] = (byte)curPsg.End_Dot.x;
-            message[messageCnt++] = (byte)curPsg.End_Dot.y;
-            message[messageCnt++] = (byte)((((byte)currentPkgList[0].IsPicked << 7) & 0x80) | (((byte)currentPkgList[1].IsPicked << 6) & 0x40)
-                | (((byte)currentPkgList[2].IsPicked << 5) & 0x20)
-                | (((byte)currentPkgList[3].IsPicked << 4) & 0x10) | (((byte)currentPkgList[4].IsPicked << 3) & 0x08) |
-                (((byte)currentPkgList[5].IsPicked << 2) & 0x04) | (((byte)CarB.mIsInMaze << 1) & 0x02) | ((byte)CarB.mRightPos & 0x01));
-            message[messageCnt++] = (byte)currentPkgList[0].mPos.x;
-            message[messageCnt++] = (byte)currentPkgList[0].mPos.y;
-            message[messageCnt++] = (byte)currentPkgList[1].mPos.x;
-            message[messageCnt++] = (byte)currentPkgList[1].mPos.y;
-            message[messageCnt++] = (byte)currentPkgList[2].mPos.x;
-            message[messageCnt++] = (byte)currentPkgList[2].mPos.y;
-            message[messageCnt++] = (byte)currentPkgList[3].mPos.x;
-            message[messageCnt++] = (byte)currentPkgList[3].mPos.y;
-            message[messageCnt++] = (byte)currentPkgList[4].mPos.x;
-            message[messageCnt++] = (byte)currentPkgList[4].mPos.y;
-            message[messageCnt++] = (byte)currentPkgList[5].mPos.x;
-            message[messageCnt++] = (byte)currentPkgList[5].mPos.y;
+            message[messageCnt++] = (byte)((mGameTime / 1000) >> 8);
+            message[messageCnt++] = (byte)(mGameTime / 1000);
+            message[messageCnt++] = (byte)((((byte)mGameStage << 6) & 0xC0) | (((byte)CarB.mTaskState << 5) & 0x20) |
+                (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08));
+            message[messageCnt++] = (byte)(CarB.mTransPos.x >> 8);
+            message[messageCnt++] = (byte)(CarB.mTransPos.x);
+            message[messageCnt++] = (byte)(CarB.mTransPos.y >> 8);
+            message[messageCnt++] = (byte)(CarB.mTransPos.y);
+            message[messageCnt++] = (byte)((((byte)mMineArray[0].Type << 6) & 0xC0) | (((byte)mMineArray[1].Type << 4) & 0x30) | ((byte)CarB.mMineStateSum()));
+            message[messageCnt++] = (byte)((((byte)CarB.mMineState[(int)MineType.A] << 4) & 0xF0) | ((byte)CarB.mMineState[(int)MineType.B]));
+            message[messageCnt++] = (byte)((((byte)CarB.mMineState[(int)MineType.C] << 4) & 0xF0) | ((byte)CarB.mMineState[(int)MineType.D]));
+            message[messageCnt++] = (byte)((((byte)mBeacon.CarBBeaconMineType[0] << 6) & 0xC0) | (((byte)mBeacon.CarBBeaconMineType[1] << 4) & 0x30) | (((byte)mBeacon.CarBBeaconMineType[2] << 2) & 0x0C));
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarB.mPos) >> 24);
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarB.mPos) >> 16);
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarB.mPos) >> 8);
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[0], CarB.mPos));
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[1], CarB.mPos) >> 24);
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[1], CarB.mPos) >> 16);
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[1], CarB.mPos) >> 8);
+            message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[1], CarB.mPos));
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[0], CarB.mPos)) >> 8);
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[0], CarB.mPos)));
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[1], CarB.mPos)) >> 8);
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[1], CarB.mPos)));
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[2], CarB.mPos)) >> 8);
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[2], CarB.mPos)));
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[0], CarB.mPos)) >> 8);
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[0], CarB.mPos)));
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[1], CarB.mPos)) >> 8);
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[1], CarB.mPos)));
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[2], CarB.mPos)) >> 8);
+            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[2], CarB.mPos)));
+            message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[0]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[1]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[2]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[3]));
+            message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[4]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[5]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[6]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[7]));
+            message[messageCnt++] = (byte)(((CarB.mIsInMaze << 7) & 0x80)
+                | ((((mGameState == GameState.NORMAL) && ((mGameStage == GameStage.FIRST_B) || ((mGameStage == GameStage.SECOND_B) && (CarB.mIsInMaze != 1))) ? 1 : 0) << 6) & 0x40)
+                | ((((0 < mBeacon.CarBBeaconNum) ? 1 : 0) << 5) & 0x20)
+                | ((((1 < mBeacon.CarBBeaconNum) ? 1 : 0) << 4) & 0x10)
+                | ((((2 < mBeacon.CarBBeaconNum) ? 1 : 0) << 3) & 0x08)
+                | ((((0 < mBeacon.CarABeaconNum) ? 1 : 0) << 2) & 0x04)
+                | ((((1 < mBeacon.CarABeaconNum) ? 1 : 0) << 1) & 0x02)
+                | (((2 < mBeacon.CarABeaconNum) ? 1 : 0) & 0x01));
             message[messageCnt++] = (byte)(CarB.MyScore >> 8);
-            message[messageCnt++] = (byte)CarB.MyScore;
-            message[messageCnt++] = (byte)CarB.mRescueCount;
-            message[messageCnt++] = (byte)CarB.mPkgCount;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[0].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[0].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[0].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[0].w2.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[1].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[1].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[1].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[1].w2.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[2].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[2].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[2].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[2].w2.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[3].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[3].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[3].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[3].w2.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[4].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[4].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[4].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[4].w2.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[5].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[5].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[5].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[5].w2.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[6].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[6].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[6].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[6].w2.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[7].w1.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[7].w1.y;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[7].w2.x;
-            message[messageCnt++] = (byte)mLabyrinth.mpWallList[7].w2.y;
+            message[messageCnt++] = (byte)(CarB.MyScore);
             message[messageCnt++] = 0x0D;
             message[messageCnt++] = 0x0A;
             return message;

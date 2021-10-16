@@ -25,6 +25,7 @@ namespace EDCHOST22
         // 比赛所用参数和场上状况
         public MyFlags flags = null;
         public VideoCapture capture = null;
+        public MineType CurrentBeaconType = MineType.A;
 
         // 设定的显示画面四角坐标
         private Point2f[] showCornerPts = null;
@@ -43,7 +44,7 @@ namespace EDCHOST22
         // private Point2i camPsgEnd;
         // 金矿坐标
         private Point2i[] camMine;
-        private Point2i camParkingPoint;
+        private Point2i[] camParkingPoint;
         // 车A坐标
         private Point2i camCarA;
         // 车B坐标
@@ -55,7 +56,7 @@ namespace EDCHOST22
         //private Point2i logicPsgStart;
         //private Point2i logicPsgEnd;
         private Point2i[] logicMine;
-        private Point2i logicParkingPoint;
+        private Point2i[] logicParkingPoint;
         private Point2i logicCarA;
         private Point2i logicCarB;
         //private Point2i[] logicPkgs;
@@ -140,20 +141,24 @@ namespace EDCHOST22
             camCarA = new Point2i();
             camCarB = new Point2i();
             camMine = new Point2i[2];
-            camParkingPoint = new Point2i();
+            camParkingPoint = new Point2i[Court.TOTAL_PARKING_AREA];
             //camPkgs = new Point2i[0];
 
             // 逻辑坐标初始化
             //logicPsgStart = new Point2i();
             //logicPsgEnd = new Point2i();
             logicMine = new Point2i[2];
-            logicParkingPoint = new Point2i();
+            logicParkingPoint = new Point2i[Court.TOTAL_PARKING_AREA];
             logicCarA = new Point2i();
             logicCarB = new Point2i();
             //logicPkgs = new Point2i[6];
             //物资信息初始化
             //PkgsWhetherPicked = new int[6];
             MineIsInMaze = new int[2] { 1, 1 };
+            for (int i = 0; i < Court.TOTAL_PARKING_AREA; i++)
+            {
+                logicParkingPoint[i] = Cvt.Dot2Point(Court.ParkID2Dot(i));
+            }
 
 
             // 显示坐标初始化
@@ -192,8 +197,6 @@ namespace EDCHOST22
         // 进行界面刷新、读取摄像头图像、与游戏逻辑交互的周期性函数
         private void Flush()
         {
-            // 从 labyrinth 目录下读取所有障碍物文件
-            //game.mLabyrinth.GetLabyName();
 
             // 如果还未进行参数设置，则创建并打开SetWindow窗口，进行参数设置
             if (!alreadySet)
@@ -232,7 +235,6 @@ namespace EDCHOST22
             //PkgsWhetherPicked[3] = game.currentPkgList[3].IsPicked;
             //PkgsWhetherPicked[4] = game.currentPkgList[4].IsPicked;
             //PkgsWhetherPicked[5] = game.currentPkgList[5].IsPicked;
-            logicParkingPoint = Cvt.Dot2Point(game.mParkPoint);
             logicMine[0] = Cvt.Dot2Point(game.mMineArray[0].Pos);
             logicMine[1] = Cvt.Dot2Point(game.mMineArray[1].Pos);
             MineIsInMaze[0] = game.mMineInMaze[0];
@@ -266,16 +268,26 @@ namespace EDCHOST22
         }
 
 
-        #region 向小车传送信息，不需要改
+        #region 与小车交互信息？？
         // 给小车A发送信息
         private void SendCarAMessage()
         {
             // 打包好要发给A车的信息
             byte[] Message = game.PackCarAMessage();
 
+            // 从小车接收的信息
+            byte[] ByteFromCarArray = new byte[1] { (byte)07 };
+
             // 通过串口1发送给A车
             if (serial1 != null && serial1.IsOpen)
+            {
                 serial1.Write(Message, 0, 70);
+                serial1.Read(ByteFromCarArray, 0, 1);
+                if (ByteFromCarArray[0] != (byte)07)
+                {
+                    CurrentBeaconType = (MineType)ByteFromCarArray[0];
+                }
+            }
             ShowMessage(Message);
             validPorts = SerialPort.GetPortNames();
         }
@@ -286,10 +298,19 @@ namespace EDCHOST22
             // 打包好要发给B车的信息
             byte[] Message = game.PackCarBMessage();
 
+            // 从小车接收的信息
+            byte[] ByteFromCarArray = new byte[1] { (byte)07 };
+
             // 通过串口2发送给B车
             if (serial2 != null && serial2.IsOpen)
+            {
                 serial2.Write(Message, 0, 70);
-
+                serial2.Read(ByteFromCarArray, 0, 1);
+                if (ByteFromCarArray[0] != (byte)07)
+                {
+                    CurrentBeaconType = (MineType)ByteFromCarArray[0];
+                }
+            }
             ShowMessage(Message);
             validPorts = SerialPort.GetPortNames();
         }
@@ -393,23 +414,56 @@ namespace EDCHOST22
             //Debug.WriteLine("{0}\n", loc.GetCentres(Camp.A).Count());
 
             //读取图标信息
-            Mat Icon_CarA, Icon_CarB, Icon_Package, Icon_Person, Icon_RedCross, Icon_Zone;
-            Icon_CarA = new Mat(@"icon\\CARA.png", ImreadModes.Color);
-            Icon_CarB = new Mat(@"icon\\CARB.png", ImreadModes.Color);
-            Icon_Package = new Mat(@"icon\\Package.png", ImreadModes.Color);
-            Icon_Person = new Mat(@"icon\\Person.png", ImreadModes.Color);
-            Icon_RedCross = new Mat(@"icon\\RedCross.png", ImreadModes.Color);
-            Icon_Zone = new Mat(@"icon\\Zone.png", ImreadModes.Color);
+            //Mat Icon_CarA, Icon_CarB, Icon_Package, Icon_Person, Icon_RedCross, Icon_Zone;
+            Mat Icon_CarA, Icon_CarB, Icon_MineA, Icon_MineB, Icon_MineC, Icon_MineD,
+                Icon_BeaconAA, Icon_BeaconAB, Icon_BeaconAC, Icon_BeaconAD,
+                Icon_BeaconBA, Icon_BeaconBB, Icon_BeaconBC, Icon_BeaconBD,
+                Icon_ParkA, Icon_ParkB, Icon_ParkC, Icon_ParkD;
+            Icon_CarA = new Mat(@"icon\\CarA.png", ImreadModes.Color);
+            Icon_CarB = new Mat(@"icon\\CarB.png", ImreadModes.Color);
+            //Icon_Package = new Mat(@"icon\\Package.png", ImreadModes.Color);
+            Icon_MineA = new Mat(@"icon\\MineA.png", ImreadModes.Color);
+            Icon_MineB = new Mat(@"icon\\MineB.png", ImreadModes.Color);
+            Icon_MineC = new Mat(@"icon\\MineC.png", ImreadModes.Color);
+            Icon_MineD = new Mat(@"icon\\MineD.png", ImreadModes.Color);
+            Icon_BeaconAA = new Mat(@"icon\\BeaconAA.png", ImreadModes.Color);
+            Icon_BeaconAB = new Mat(@"icon\\BeaconAB.png", ImreadModes.Color);
+            Icon_BeaconAC = new Mat(@"icon\\BeaconAC.png", ImreadModes.Color);
+            Icon_BeaconAD = new Mat(@"icon\\BeaconAD.png", ImreadModes.Color);
+            Icon_BeaconBA = new Mat(@"icon\\BeaconBA.png", ImreadModes.Color);
+            Icon_BeaconBB = new Mat(@"icon\\BeaconBB.png", ImreadModes.Color);
+            Icon_BeaconBC = new Mat(@"icon\\BeaconBC.png", ImreadModes.Color);
+            Icon_BeaconBD = new Mat(@"icon\\BeaconBD.png", ImreadModes.Color);
+            Icon_ParkA = new Mat(@"icon\\ParkingA.png", ImreadModes.Color);
+            Icon_ParkB = new Mat(@"icon\\ParkingB.png", ImreadModes.Color);
+            Icon_ParkC = new Mat(@"icon\\ParkingC.png", ImreadModes.Color);
+            Icon_ParkD = new Mat(@"icon\\ParkingD.png", ImreadModes.Color);
 
             Cv2.Resize(Icon_CarA, Icon_CarA, new OpenCvSharp.Size(20,20), 0, 0, InterpolationFlags.Cubic);
             Cv2.Resize(Icon_CarB, Icon_CarB, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
-            Cv2.Resize(Icon_Package, Icon_Package, new OpenCvSharp.Size(22, 22), 0, 0, InterpolationFlags.Cubic);
-            Cv2.Resize(Icon_Person, Icon_Person, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
-            Cv2.Resize(Icon_RedCross, Icon_RedCross, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
-            Cv2.Resize(Icon_Zone, Icon_Zone, new OpenCvSharp.Size(22, 22), 0, 0, InterpolationFlags.Cubic);
+            //Cv2.Resize(Icon_Package, Icon_Package, new OpenCvSharp.Size(22, 22), 0, 0, InterpolationFlags.Cubic);
+            //Cv2.Resize(Icon_Person, Icon_Person, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            //Cv2.Resize(Icon_RedCross, Icon_RedCross, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            //Cv2.Resize(Icon_Zone, Icon_Zone, new OpenCvSharp.Size(22, 22), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_MineA, Icon_MineA, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_MineB, Icon_MineB, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_MineC, Icon_MineC, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_MineD, Icon_MineD, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_ParkA, Icon_ParkA, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_ParkB, Icon_ParkB, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_ParkC, Icon_ParkC, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_ParkD, Icon_ParkD, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_BeaconAA, Icon_BeaconAA, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_BeaconAB, Icon_BeaconAB, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_BeaconAC, Icon_BeaconAC, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_BeaconAD, Icon_BeaconAD, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_BeaconBA, Icon_BeaconBA, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_BeaconBB, Icon_BeaconBB, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_BeaconBC, Icon_BeaconBC, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+            Cv2.Resize(Icon_BeaconBD, Icon_BeaconBD, new OpenCvSharp.Size(20, 20), 0, 0, InterpolationFlags.Cubic);
+
 
             // 在小车1的位置上绘制红色实心圆
-
             foreach (Point2i c1 in loc.GetCentres(Camp.A))
             {
                 int Tx = c1.X - 10, Ty = c1.Y - 10, Tcol = Icon_CarA.Cols, Trow = Icon_CarA.Rows;
@@ -434,191 +488,160 @@ namespace EDCHOST22
                 Icon_CarB.CopyTo(Pos);
                 //Cv2.Circle(mat, c2, 10, new Scalar(0xff, 0x00, 0x00), -1);
             }
-            
 
-            //绘制人员起始或终点位置， 并在当前位置和目标位置连线
-            //目标点 绿色 正方形  边长16
-            //连线 浅绿 线宽 3
-            if (game.gameState == GameState.NORMAL 
-                && (game.gameStage == GameStage.FIRST_2 || game.gameStage == GameStage.LATTER_2))
+
+            // 绘制金矿位置
+            if (game.mGameState == GameState.NORMAL)
             {
-                if (game.UpperCamp == Camp.A)
+                Point2f[] logicMineDots = new Point2f[game.mMineInMaze[0] + game.mMineInMaze[1]];
+                MineType[] mineTypes = new MineType[game.mMineInMaze[0] + game.mMineInMaze[1]];
+                if (logicMineDots.Length != 0)
                 {
-
-                    Dot StartDot = game.curPsg.Start_Dot;
-                    Dot EndDot = game.curPsg.End_Dot;
-
-                    Point2f[] logicDots1 = { Cvt.Dot2Point(StartDot), Cvt.Dot2Point(EndDot) };
-                    Point2f[] showDots1 = coordCvt.LogicToCamera(logicDots1);
-
-                    if (game.CarB.mIsWithPassenger == 0)
+                    int temp = 0;
+                    for (int i = 0; i < MineGenerator.COURTMINENUM; i++)
                     {
-                        
-                        int x10 = (int)showDots1[0].X;
-                        int y10 = (int)showDots1[0].Y;
-
-
-                        int Tx = x10 - 10, Ty = y10 - 10, Tcol = Icon_Person.Cols, Trow = Icon_Person.Rows;
-                        if (Tx < 0) Tx = 0;
-                        if (Ty < 0) Ty = 0;
-                        if (Tx + Tcol > mat.Cols) Tcol = mat.Cols - Tx;
-                        if (Ty + Trow > mat.Rows) Trow = mat.Rows - Ty;
-                        Mat Pos = new Mat(mat, new Rect(Tx, Ty, Tcol, Trow));
-                        Icon_Person.CopyTo(Pos);
-
-                        //Cv2.Rectangle(mat, new Rect(x10-8, y10-8, 16, 16), new Scalar(0x00, 0xff, 0x00), -1);
-                        if (camCarB.X>0&&camCarB.Y>0)
+                        if (game.mMineInMaze[i] == 1)
                         {
-                            Cv2.Line(mat, camCarB.X, camCarB.Y, x10, y10, new Scalar(0x00, 0xff, 0x98), 3);
+                            logicMineDots[temp] = Cvt.Dot2Point(game.mMineArray[i].Pos);
+                            mineTypes[temp] = game.mMineArray[i].Type;
+                            temp++;
                         }
-                        
                     }
-                    else
+                    Point2f[] showMineDots = coordCvt.LogicToCamera(logicMineDots);
+                    for (int i = 0; i < game.mMineInMaze[0] + game.mMineInMaze[1]; i++)
                     {
-                        int x10 = (int)showDots1[1].X;
-                        int y10 = (int)showDots1[1].Y;
-
-                        int Tx = x10 - 10, Ty = y10 - 10, Tcol = Icon_RedCross.Cols, Trow = Icon_RedCross.Rows;
-                        if (Tx < 0) Tx = 0;
-                        if (Ty < 0) Ty = 0;
-                        if (Tx + Tcol > mat.Cols) Tcol = mat.Cols - Tx;
-                        if (Ty + Trow > mat.Rows) Trow = mat.Rows - Ty;
-                        Mat Pos = new Mat(mat, new Rect(Tx, Ty, Tcol, Trow));
-                        Icon_RedCross.CopyTo(Pos);
-
-                        //Cv2.Rectangle(mat, new Rect(x10-8, y10-8, 16, 16), new Scalar(0x00, 0x00, 0xff), -1);
-                        if (camCarB.X>0&&camCarB.Y>0)
+                        if (flags.calibrated)
                         {
-                            Cv2.Line(mat, camCarB.X, camCarB.Y, x10, y10, new Scalar(0x40, 0x40, 0xff), 3);
+                            int x = (int)showMineDots[i].X;
+                            int y = (int)showMineDots[i].Y;
+                            int Tx = x - 10, Ty = y - 10, Tcol = Icon_MineA.Cols, Trow = Icon_MineA.Rows;
+                            if (Tx < 0) Tx = 0;
+                            if (Ty < 0) Ty = 0;
+                            if (Tx + Tcol > mat.Cols) Tcol = mat.Cols - Tx;
+                            if (Ty + Trow > mat.Rows) Trow = mat.Rows - Ty;
+                            Mat Pos = new Mat(mat, new Rect(Tx, Ty, Tcol, Trow));
+                            switch (mineTypes[i])
+                            {
+                                case MineType.A:
+                                    {
+                                        Icon_MineA.CopyTo(Pos); break;
+                                    }
+                                case MineType.B:
+                                    {
+                                        Icon_MineB.CopyTo(Pos); break;
+                                    }
+                                case MineType.C:
+                                    {
+                                        Icon_MineC.CopyTo(Pos); break;
+                                    }
+                                case MineType.D:
+                                    {
+                                        Icon_MineD.CopyTo(Pos); break;
+                                    }
+                            };
                         }
-                        
-                    }
-                }
-                else if (game.UpperCamp == Camp.B)
-                {
-                    Dot StartDot = game.curPsg.Start_Dot;
-                    Dot EndDot = game.curPsg.End_Dot;
-
-                    Point2f[] logicDots1 = { Cvt.Dot2Point(StartDot), Cvt.Dot2Point(EndDot) };
-                    Point2f[] showDots1 = coordCvt.LogicToCamera(logicDots1);
-                    if (game.CarA.mIsWithPassenger == 0)
-                    {
-                        int x10 = (int)showDots1[0].X;
-                        int y10 = (int)showDots1[0].Y;
-                        int Tx = x10 - 10, Ty = y10 - 10, Tcol = Icon_Person.Cols, Trow = Icon_Person.Rows;
-                        if (Tx < 0) Tx = 0;
-                        if (Ty < 0) Ty = 0;
-                        if (Tx + Tcol > mat.Cols) Tcol = mat.Cols - Tx;
-                        if (Ty + Trow > mat.Rows) Trow = mat.Rows - Ty;
-                        Mat Pos = new Mat(mat, new Rect(Tx, Ty, Tcol, Trow));
-                        Icon_Person.CopyTo(Pos);
-                        //Cv2.Rectangle(mat, new Rect(x10-8, y10-8, 16, 16), new Scalar(0x00, 0xff, 0x00), -1);
-                        if (camCarA.X>0&&camCarA.Y>0)
-                        {
-                            Cv2.Line(mat, camCarA.X, camCarA.Y, x10, y10, new Scalar(0x00, 0xff, 0x98), 3);
-                        }
-                        
-                    }
-                    else
-                    {
-                        int x10 = (int)showDots1[1].X;
-                        int y10 = (int)showDots1[1].Y;
-                        int Tx = x10 - 10, Ty = y10 - 10, Tcol = Icon_RedCross.Cols, Trow = Icon_RedCross.Rows;
-                        if (Tx < 0) Tx = 0;
-                        if (Ty < 0) Ty = 0;
-                        if (Tx + Tcol > mat.Cols) Tcol = mat.Cols - Tx;
-                        if (Ty + Trow > mat.Rows) Trow = mat.Rows - Ty;
-                        Mat Pos = new Mat(mat, new Rect(Tx, Ty, Tcol, Trow));
-                        Icon_RedCross.CopyTo(Pos);
-                        //Cv2.Rectangle(mat, new Rect(x10-10, y10-10, 20, 20), new Scalar(0x00, 0x00, 0xff), -1);
-                        if (camCarA.X>0&&camCarA.Y>0)
-                        {                        
-                            Cv2.Line(mat, camCarA.X, camCarA.Y, x10, y10, new Scalar(0x40, 0x40, 0xff), 3);
-                        }
-
-                    }
-                }
-
-                //绘制物资
-                Dot DotA = game.currentPkgList[0].mPos;
-                Dot DotB = game.currentPkgList[1].mPos;
-                Dot DotC = game.currentPkgList[2].mPos;
-                Dot DotD = game.currentPkgList[3].mPos;
-                Dot DotE = game.currentPkgList[4].mPos;
-                Dot DotF = game.currentPkgList[5].mPos;
-
-                Point2f[] logicDots = { Cvt.Dot2Point(DotA), Cvt.Dot2Point(DotB), Cvt.Dot2Point(DotC), Cvt.Dot2Point(DotD), Cvt.Dot2Point(DotE), Cvt.Dot2Point(DotF) };
-                Point2f[] showDots = coordCvt.LogicToCamera(logicDots);
-                for(int i=0;i<6;i++)
-                {
-                    
-                    if (PkgsWhetherPicked[i]==0)
-                    {
-                        int x = (int)showDots[i].X;
-                        int y = (int)showDots[i].Y;
-                        int Tx = x - 11, Ty = y - 11, Tcol = Icon_Package.Cols, Trow = Icon_Package.Rows;
-                        if (Tx < 0) Tx = 0;
-                        if (Ty < 0) Ty = 0;
-                        if (Tx + Tcol > mat.Cols) Tcol = mat.Cols - Tx;
-                        if (Ty + Trow > mat.Rows) Trow = mat.Rows - Ty;
-                        Mat Pos = new Mat(mat, new Rect(Tx, Ty, Tcol, Trow));
-                        Icon_Package.CopyTo(Pos);
-                        //Cv2.Circle(mat, x, y, 10, new Scalar(0x00, 0xff, 0xff),-1);
                     }
                 }
             }
+            
 
-            //绘制泄洪口
-            Dot Dot1 = game.mFlood.dot1;
-            Dot Dot2 = game.mFlood.dot2;
-            Dot Dot3 = game.mFlood.dot3;
-            Dot Dot4 = game.mFlood.dot4;
-            Dot Dot5 = game.mFlood.dot5;
-
-            Point2f[] logicDots2 = { Cvt.Dot2Point(Dot1), Cvt.Dot2Point(Dot2), Cvt.Dot2Point(Dot3), Cvt.Dot2Point(Dot4), Cvt.Dot2Point(Dot5) };
-           
-            for (int i = 0; i < game.mFlood.num; i++)
+            // 绘制停车点位置
+            if (game.mGameState == GameState.NORMAL)
             {
-                if(flags.calibrated)
+                Point2f[] logicParkingDots = new Point2f[Court.TOTAL_PARKING_AREA];       // 8个停车点
+                MineType[] parkTypes = new MineType[Court.TOTAL_PARKING_AREA];          // 8个停车点的类型
+                for (int i = 0; i < Court.TOTAL_PARKING_AREA; i++){
+                    logicParkingDots[i] = Cvt.Dot2Point(Court.ParkID2Dot(i));
+                }
+                Point2f[] showParkingDots = coordCvt.LogicToCamera(logicParkingDots);  // 8个停车点
+                for (int i = 0; i < Court.TOTAL_PARKING_AREA; i++)
                 {
-                    Point2f[] showDots2 = coordCvt.LogicToCamera(logicDots2);
-                    int x = (int)showDots2[i].X;
-                    int y = (int)showDots2[i].Y;
-                    int Tx = x - 11, Ty = y - 11, Tcol = Icon_Zone.Cols, Trow = Icon_Zone.Rows;
+                    int x = (int)showParkingDots[i].X;
+                    int y = (int)showParkingDots[i].Y;
+                    int Tx = x - 10, Ty = y - 10, Tcol = Icon_ParkA.Cols, Trow = Icon_ParkA.Rows;
                     if (Tx < 0) Tx = 0;
                     if (Ty < 0) Ty = 0;
                     if (Tx + Tcol > mat.Cols) Tcol = mat.Cols - Tx;
                     if (Ty + Trow > mat.Rows) Trow = mat.Rows - Ty;
                     Mat Pos = new Mat(mat, new Rect(Tx, Ty, Tcol, Trow));
-                    Icon_Zone.CopyTo(Pos);
-                    //Cv2.Circle(mat, x, y, 5, new Scalar(0xff, 0xff, 0x00), -1);
-                }
+                    switch (game.mMineGenerator.ParkType[i])
+                    {
+                        case MineType.A: Icon_ParkA.CopyTo(Pos);break;
+                        case MineType.B: Icon_ParkB.CopyTo(Pos);break;
+                        case MineType.C: Icon_ParkC.CopyTo(Pos);break;
+                        case MineType.D: Icon_ParkD.CopyTo(Pos);break;
+                    };
+                }            
             }
 
-            // 如果障碍物已被成功设置
-            if (game.mLabyrinth.IsLabySet == true)
+            // 绘制信标位置
+            if (game.mGameState == GameState.NORMAL)
             {
-                //绘制迷宫障碍物
-                for (int i = 0; i < game.mLabyrinth.mWallNum; i++)
+                if (game.mBeacon.CarABeaconNum > 0)
                 {
-                    Dot StartDot = game.mLabyrinth.mpWallList[i].w1;
-                    Dot EndDot = game.mLabyrinth.mpWallList[i].w2;
-
-                    Point2f[] logicDots = { Cvt.Dot2Point(StartDot), Cvt.Dot2Point(EndDot) };
-
-                    if (flags.calibrated)
+                    Point2f[] logicBeaconADots = new Point2f[game.mBeacon.CarABeaconNum];
+                    MineType[] beaconAType = new MineType[game.mBeacon.CarABeaconNum];
+                    for (int i = 0; i < game.mBeacon.CarABeaconNum; i++)
                     {
-                        Point2f[] showDots = coordCvt.LogicToCamera(logicDots);
-                        Cv2.Line(mat, (int)showDots[0].X, (int)showDots[0].Y,
-                            (int)showDots[1].X, (int)showDots[1].Y,
-                            new Scalar(35, 35, 139), 5);
+                        logicBeaconADots[i] = Cvt.Dot2Point(game.mBeacon.CarABeacon[i]);
+                        beaconAType[i] = game.mBeacon.CarABeaconMineType[i];
+                    }
+                    Point2f[] showBeaconADots = coordCvt.LogicToCamera(logicBeaconADots);
+                    for (int i = 0; i < game.mBeacon.CarABeaconNum; i++)
+                    {
+                        if (flags.calibrated)
+                        {
+                            int x = (int)showBeaconADots[i].X;
+                            int y = (int)showBeaconADots[i].Y;
+                            int Tx = x - 10, Ty = y - 10, Tcol = Icon_BeaconAA.Cols, Trow = Icon_BeaconAA.Rows;
+                            if (Tx < 0) Tx = 0;
+                            if (Ty < 0) Ty = 0;
+                            if (Tx + Tcol > mat.Cols) Tcol = mat.Cols - Tx;
+                            if (Ty + Trow > mat.Rows) Trow = mat.Rows - Ty;
+                            Mat Pos = new Mat(mat, new Rect(Tx, Ty, Tcol, Trow));
+                            switch (beaconAType[i])
+                            {
+                                case MineType.A: Icon_BeaconAA.CopyTo(Pos); break;
+                                case MineType.B: Icon_BeaconAB.CopyTo(Pos); break;
+                                case MineType.C: Icon_BeaconAC.CopyTo(Pos); break;
+                                case MineType.D: Icon_BeaconAD.CopyTo(Pos); break;
+                            };
+                        }
                     }
                 }
-                //Debug.WriteLine("Has created Laby.");
-                //Cv2.Merge(new Mat[] { car1, car2, black }, merged);
-                //Cv2.ImShow("binary", merged);
+                if (game.mBeacon.CarBBeaconNum > 0)
+                {
+                    Point2f[] logicBeaconBDots = new Point2f[game.mBeacon.CarBBeaconNum];
+                    MineType[] beaconBType = new MineType[game.mBeacon.CarBBeaconNum];
+                    for (int i = 0; i < game.mBeacon.CarBBeaconNum; i++)
+                    {
+                        logicBeaconBDots[i] = Cvt.Dot2Point(game.mBeacon.CarBBeacon[i]);
+                        beaconBType[i] = game.mBeacon.CarBBeaconMineType[i];
+                    }
+                    Point2f[] showBeaconBDots = coordCvt.LogicToCamera(logicBeaconBDots);
+                    for (int i = 0; i < game.mBeacon.CarBBeaconNum; i++)
+                    {
+                        if (flags.calibrated)
+                        {
+                            int x = (int)showBeaconBDots[i].X;
+                            int y = (int)showBeaconBDots[i].Y;
+                            int Tx = x - 10, Ty = y - 10, Tcol = Icon_BeaconAA.Cols, Trow = Icon_BeaconAA.Rows;
+                            if (Tx < 0) Tx = 0;
+                            if (Ty < 0) Ty = 0;
+                            if (Tx + Tcol > mat.Cols) Tcol = mat.Cols - Tx;
+                            if (Ty + Trow > mat.Rows) Trow = mat.Rows - Ty;
+                            Mat Pos = new Mat(mat, new Rect(Tx, Ty, Tcol, Trow));
+                            switch (beaconBType[i])
+                            {
+                                case MineType.A: Icon_BeaconBA.CopyTo(Pos); break;
+                                case MineType.B: Icon_BeaconBB.CopyTo(Pos); break;
+                                case MineType.C: Icon_BeaconBC.CopyTo(Pos); break;
+                                case MineType.D: Icon_BeaconBD.CopyTo(Pos); break;
+                            };
+                        }
+                    }
+                }
             }
-
         }
 
         // 更新UI界面上的显示图像
@@ -637,11 +660,11 @@ namespace EDCHOST22
             labelAScore.Text = $"{game.CarA.MyScore}";
             labelBScore.Text = $"{game.CarB.MyScore}";
 
-            // 上半场或下半场
-            label_GameCount.Text = (game.gameStage == GameStage.FIRST_1 || game.gameStage == GameStage.FIRST_2) ? "上半场" : "下半场";
+            // 第一回合或第二回合
+            label_GameCount.Text = (game.mGameStage == GameStage.FIRST_A || game.mGameStage == GameStage.FIRST_B) ? "第一回合" : "第二回合";
 
-            // 阶段一或阶段二
-            label_GameStage.Text = (game.gameStage == GameStage.FIRST_1 || game.gameStage == GameStage.LATTER_1) ? "阶段一" : "阶段二";
+            // A上场或B上场
+            label_GameStage.Text = (game.mGameStage == GameStage.FIRST_A || game.mGameStage == GameStage.SECOND_A) ? "A上场" : "B上场";
 
             // A,B车犯规的次数
             label_AFoulNum.Text = $"{game.CarA.mFoulCount}";
@@ -649,11 +672,11 @@ namespace EDCHOST22
 
             // A,B车的得分明细
             label_AMessage.Text =
-                $"转移被困人员数　　{game.CarA.mRescueCount}\n" +
-                $"获得防汛物资数　　{game.CarA.mPkgCount}\n";
+                $"收集金矿数　{game.CarA.mMine1Load} + {game.CarA.mMine2Load.Sum()}\n" +
+                $"运送金矿数　{game.CarA.mMine1Unload} + {game.CarA.mMine2Unload.Sum()}\n";
             label_BMessage.Text =
-                $"{game.CarB.mRescueCount}　　转移被困人员数\n" +
-                $"{game.CarB.mPkgCount}　　获得防汛物资数\n";
+                $"{game.CarB.mMine1Load} + {game.CarB.mMine2Load.Sum()}　收集金矿数\n" +
+                $"{game.CarB.mMine1Unload} + {game.CarB.mMine2Unload.Sum()}　运送金矿数\n";
 
             // A,B车的坐标信息
             label_Debug.Text =
@@ -663,18 +686,16 @@ namespace EDCHOST22
             //比赛时间信息
             time.Text = $"比赛时间： ({game.mGameTime/1000})\n";
 
-            AWall.Text = $"A撞到虚拟障碍物数　　{game.CarA.mCrossWallCount}\n";
-            BWall.Text = $"B撞到虚拟障碍物数　　{game.CarB.mCrossWallCount}\n";
 
-            ABeacon.Text = $"A撞到隔离区数　　{game.CarA.mCrossFloodCount}\n";
-            BBeacon.Text = $"B撞到隔离区数　　{game.CarB.mCrossFloodCount}\n";
+            ABeacon.Text = $"A撞到信标数　　{game.CarA.mCrossBeaconCount}\nA载有金矿数  ({game.CarA.mMineState[0]},{game.CarA.mMineState[1]},{game.CarA.mMineState[2]},{game.CarA.mMineState[3]})";
+            BBeacon.Text = $"B撞到信标数　　{game.CarB.mCrossBeaconCount}\nB载有金矿数  ({game.CarB.mMineState[0]},{game.CarB.mMineState[1]},{game.CarB.mMineState[2]},{game.CarB.mMineState[3]})";
 
         }
 
         #endregion
 
 
-        #region 与界面控件有关的函数，已完成修改
+        #region 与界面控件有关的函数
 
         // 当Tracker界面被关闭时，处理一些接口的关闭
         private void Tracker_FormClosed(object sender, FormClosedEventArgs e)
@@ -868,7 +889,7 @@ namespace EDCHOST22
         }
         private void SetBeacon_Click(object sender, EventArgs e)
         {
-            game.SetBeacon();
+            game.SetBeacon(CurrentBeaconType);
         }
 
         private void NextStage_Click(object sender, EventArgs e)
@@ -876,17 +897,21 @@ namespace EDCHOST22
             game.mGameTime = 200000;
             game.CheckNextStage();
             game.mGameTime = 0;
+            buttonStart.Enabled = true;
+            button_Continue.Enabled = false;
+            buttonPause.Enabled = false;
         }
 
         private void LastStage_Click(object sender, EventArgs e)
         {
             game.mGameTime = 0;
             game.mGameStage--;
+            buttonStart.Enabled = true;
+            button_Continue.Enabled = false;
+            buttonPause.Enabled = false;
         }
 
-
         #endregion
-
 
         #region 由定时器控制的函数，已完成修改
 

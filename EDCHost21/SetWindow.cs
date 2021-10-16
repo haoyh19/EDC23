@@ -48,11 +48,6 @@ namespace EDCHOST22
                 cbPorts2.Items.Add(port);
             }
 
-            cbLaby.Items.Clear();
-            foreach (string fName in _game.mLabyrinth.LabyName)
-            {
-                cbLaby.Items.Add(fName);
-            }
                 
             if (_tracker.serial1 != null && _tracker.serial1.IsOpen)
             {
@@ -316,13 +311,5 @@ namespace EDCHOST22
 
         }
 
-        private void cbLaby_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            // 读取当前下拉框选的障碍物文件
-            string FileName = cbLaby.Text;
-
-            // 从已选文件中读取数据
-            _game.mLabyrinth.ReadFromFile(FileName);
-        }
     }
 }

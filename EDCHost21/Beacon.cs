@@ -6,14 +6,18 @@ using System.Threading.Tasks;
 
 namespace EDCHOST22
 {
+    
     public class Beacon
     {
+        //如果设置为const,在Game.cs部分无法使用
+        public const int MAX_BEACON_NUM = 3;  //一辆车最大允许放置的信标数目为3
+
         //CarA放置的信标
         public Dot[] CarABeacon;
+        public MineType[] CarABeaconMineType;
         //CarB放置的信标
         public Dot[] CarBBeacon;
-        //一辆车最大允许放置的信标
-        public int MaxBeaconNum;
+        public MineType[] CarBBeaconMineType;
         //CarA放置的信标数量
         public int CarABeaconNum;
         //CarB放置的信标数量
@@ -21,10 +25,20 @@ namespace EDCHOST22
         //构造函数
         public Beacon()
         {
-            //一辆车放置的信标数量最大为3
-            MaxBeaconNum = 3;
-            CarABeacon = new Dot[MaxBeaconNum];
-            CarBBeacon = new Dot[MaxBeaconNum];
+            CarABeacon = new Dot[MAX_BEACON_NUM];
+            CarABeaconMineType = new MineType[MAX_BEACON_NUM];
+            for (int i = 0; i < MAX_BEACON_NUM; i++)
+            {
+                CarABeacon[i] = new Dot();
+                CarABeaconMineType[i] = MineType.A;
+            }
+            CarBBeacon = new Dot[MAX_BEACON_NUM];
+            CarBBeaconMineType = new MineType[MAX_BEACON_NUM];
+            for (int i = 0; i < MAX_BEACON_NUM; i++)
+            {
+                CarBBeacon[i] = new Dot();
+                CarBBeaconMineType[i] = MineType.A;
+            }
             CarABeaconNum = 0;
             CarBBeaconNum = 0;
         }
@@ -36,21 +50,23 @@ namespace EDCHOST22
             CarBBeaconNum = 0;
         }
         //CarA放置信标
-        public void CarAAddBeacon(Dot Pos)
+        public void CarAAddBeacon(Dot Pos, MineType type)
         {
             //放置的信标不多于MaxBeaconNum
-            if (CarABeaconNum < MaxBeaconNum)
+            if (CarABeaconNum < MAX_BEACON_NUM)
             {
                 CarABeacon[CarABeaconNum] = Pos;
+                CarABeaconMineType[CarABeaconNum] = type;  
                 CarABeaconNum++;
             }
         }
         //CarB放置信标
-        public void CarBAddBeacon(Dot Pos)
+        public void CarBAddBeacon(Dot Pos, MineType type)
         {
-            if (CarBBeaconNum < MaxBeaconNum)
+            if (CarBBeaconNum < MAX_BEACON_NUM)
             {
                 CarBBeacon[CarBBeaconNum] = Pos;
+                CarBBeaconMineType[CarBBeaconNum] = type;
                 CarBBeaconNum++;
             }
         }
@@ -58,8 +74,8 @@ namespace EDCHOST22
         //如果某一方未放置够3个信标，未放置的信标所返回的距离为-1
         public double[] GetCarADistance(Dot Pos)
         {
-            double[] Distance = new double[MaxBeaconNum * 2];
-            for (int i = 0; i < MaxBeaconNum; i++)
+            double[] Distance = new double[MAX_BEACON_NUM * 2];
+            for (int i = 0; i < MAX_BEACON_NUM; i++)
             {
                 if (i < CarABeaconNum)
                 {
@@ -70,15 +86,15 @@ namespace EDCHOST22
                     Distance[i] = -1;
                 }
             }
-            for (int i = 0; i < MaxBeaconNum; i++)
+            for (int i = 0; i < MAX_BEACON_NUM; i++)
             {
                 if (i < CarBBeaconNum)
                 {
-                    Distance[i + MaxBeaconNum] = Dot.GetDistance(Pos, CarBBeacon[i]);
+                    Distance[i + MAX_BEACON_NUM] = Dot.GetDistance(Pos, CarBBeacon[i]);
                 }
                 else
                 {
-                    Distance[i + MaxBeaconNum] = -1;
+                    Distance[i + MAX_BEACON_NUM] = -1;
                 }
             }
             return Distance;
@@ -87,8 +103,8 @@ namespace EDCHOST22
         //如果某一方未放置够3个信标，未放置的信标所返回的距离为-1
         public double[] GetCarBDistance(Dot Pos)
         {
-            double[] Distance = new double[MaxBeaconNum * 2];
-            for (int i = 0; i < MaxBeaconNum; i++)
+            double[] Distance = new double[MAX_BEACON_NUM * 2];
+            for (int i = 0; i < MAX_BEACON_NUM; i++)
             {
                 if (i < CarBBeaconNum)
                 {
@@ -99,15 +115,15 @@ namespace EDCHOST22
                     Distance[i] = -1;
                 }
             }
-            for (int i = 0; i < MaxBeaconNum; i++)
+            for (int i = 0; i < MAX_BEACON_NUM; i++)
             {
                 if (i < CarABeaconNum)
                 {
-                    Distance[i + MaxBeaconNum] = Dot.GetDistance(Pos, CarABeacon[i]);
+                    Distance[i + MAX_BEACON_NUM] = Dot.GetDistance(Pos, CarABeacon[i]);
                 }
                 else
                 {
-                    Distance[i + MaxBeaconNum] = -1;
+                    Distance[i + MAX_BEACON_NUM] = -1;
                 }
             }
             return Distance;

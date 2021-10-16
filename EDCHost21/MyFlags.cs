@@ -67,7 +67,7 @@ namespace EDCHOST22
             // 以下数据待定，根据实际设备确定
             showSize = new OpenCvSharp.Size(960, 720);
             cameraSize = new OpenCvSharp.Size(1280, 960);
-            logicSize = new OpenCvSharp.Size(Game.MAX_SIZE_CM, Game.MAX_SIZE_CM);
+            logicSize = new OpenCvSharp.Size(Court.MAX_SIZE_CM, Court.MAX_SIZE_CM);
 
             // 点击显示画面的次数，用于校正画面
             clickCount = 0;
