@@ -1,5 +1,5 @@
-# EDCHost22
-## 注意：先将icon和video文件夹添加到运行程序的文件夹中！！！
+# EDCHost23
+## 注意：先将./ForDebug/文件夹下内容添添加到运行程序目录中！！！
 
 ## 软件使用方法
 
@@ -37,6 +37,10 @@
 
 - 单击 `开始录像`，开始录像；再次单击，结束录像。结束后，会将比赛过程录制成视频，生成以时间为文件名的视频文件，储存在`video`文件夹下，并生成同名的txt文件，记录犯规记录信息。
 
+- 单击某一方 `犯规` 可为该队记一次犯规。
+
+- 单击 `下一阶段` 或 `上一阶段` 可强制进入比赛的下一阶段或上一阶段，供调试使用。
+
 ## 通信模块使用方法
 使用ZigBee进行通信。首先将模块按照“ZigBee”文件夹中的《DL-30按键配置使用说明书》进行配置，再连接至电脑后打开上位机（或进入上位机“设置”中手动选择端口）即可。
 
@@ -51,11 +55,11 @@
 
 ## 通信协议
 
-通信协议见“EDC23通信协议v x.x”。
+通信协议见“EDC23通讯协议v0.2.xlsx”。
 
-通信协议在数据包第28、29字节增加了CRC16校验码，多项式0x8005，初始值0xFFFF。可在网站[https://crccalc.com/](https://crccalc.com/)上进行在线计算（其中的CRC-16/MODBUS）。注意，这里所计算的是数据包中除去最后四行（**第0~27字节**，包含了保留位，不包含末尾的0x0D、0x0A）的校验码。关于校验码，提供一个示例程序crc16.c，位于“ZigBee”文件夹中，包含了一个计算CRC16校验码的函数`unsigned short crc16(unsigned char *data_p, unsigned char length)`。
+通信协议在数据包第36、37字节增加了CRC16校验码，多项式0x8005，初始值0xFFFF。可在网站[https://crccalc.com/](https://crccalc.com/)上进行在线计算（其中的CRC-16/MODBUS）。注意，这里所计算的是数据包中除去最后四行（**第0~35字节**，包含了保留位，不包含末尾的0x0D、0x0A）的校验码。关于校验码，提供一个示例程序crc16.c，位于“ZigBee”文件夹中，包含了一个计算CRC16校验码的函数`unsigned short crc16(unsigned char *data_p, unsigned char length)`。
 
 ## 从源码编译
 
-- 测试环境：Microsoft Visual Studio 2017, .NET Framework 4.6。打开EDCHost21.sln后直接生成解决方案即可。
-- 运行前将ForDebug文件夹下的dll.zip解压为文件夹后放至"<项目路径>\EDCHost21\bin\Debug"路径下。“data.txt”是颜色设置参考数值，也可放在"<项目路径>\EDCHost21\bin\Debug"路径下，程序将自动读取。
+- 测试环境：Microsoft Visual Studio 2022 Preview, .NET Framework 6.0。打开EDCHost21.sln后直接生成解决方案即可。
+- 运行前将ForDebug文件夹下所有文件夹和文件打包后放至"<项目路径>\EDCHost21\bin\Debug"路径下。“data.txt”是颜色设置参考数值，放在"<项目路径>\EDCHost21\bin\Debug"路径下时，程序将自动读取。
