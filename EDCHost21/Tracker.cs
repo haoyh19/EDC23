@@ -687,8 +687,10 @@ namespace EDCHOST22
             time.Text = $"比赛时间： ({game.mGameTime/1000})\n";
 
 
-            ABeacon.Text = $"A撞到信标数　　{game.CarA.mCrossBeaconCount}\nA载有金矿数  ({game.CarA.mMineState[0]},{game.CarA.mMineState[1]},{game.CarA.mMineState[2]},{game.CarA.mMineState[3]})";
-            BBeacon.Text = $"B撞到信标数　　{game.CarB.mCrossBeaconCount}\nB载有金矿数  ({game.CarB.mMineState[0]},{game.CarB.mMineState[1]},{game.CarB.mMineState[2]},{game.CarB.mMineState[3]})";
+            ABeacon.Text = $"A撞到信标数    {game.CarA.mCrossBeaconCount}\nA载有金矿数    {game.CarA.mMineState[0]}    {game.CarA.mMineState[1]}";
+            label2.Text = $"{game.CarA.mMineState[2]}    {game.CarA.mMineState[3]}";
+            BBeacon.Text = $"B撞到信标数    {game.CarB.mCrossBeaconCount}\nB载有金矿数    {game.CarB.mMineState[0]}    {game.CarB.mMineState[1]}";
+            label3.Text = $"{game.CarB.mMineState[2]}    {game.CarB.mMineState[3]}";
 
         }
 
@@ -909,6 +911,11 @@ namespace EDCHOST22
             buttonStart.Enabled = true;
             button_Continue.Enabled = false;
             buttonPause.Enabled = false;
+        }
+
+        private void label4_Click(object sender, EventArgs e)
+        {
+
         }
 
         #endregion
