@@ -281,8 +281,8 @@ namespace EDCHOST22
             // 通过串口1发送给A车
             if (serial1 != null && serial1.IsOpen)
             {
-                serial1.Write(Message, 0, 70);
-                serial1.Read(ByteFromCarArray, 0, 1);
+                serial1.Write(Message, 0, 38);
+                //serial1.Read(ByteFromCarArray, 0, 1);
                 if (ByteFromCarArray[0] != (byte)07)
                 {
                     CurrentBeaconType = (MineType)ByteFromCarArray[0];
@@ -304,8 +304,8 @@ namespace EDCHOST22
             // 通过串口2发送给B车
             if (serial2 != null && serial2.IsOpen)
             {
-                serial2.Write(Message, 0, 70);
-                serial2.Read(ByteFromCarArray, 0, 1);
+                serial2.Write(Message, 0, 38);
+                //serial2.Read(ByteFromCarArray, 0, 1);
                 if (ByteFromCarArray[0] != (byte)07)
                 {
                     CurrentBeaconType = (MineType)ByteFromCarArray[0];
