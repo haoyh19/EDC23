@@ -343,7 +343,7 @@
             this.label_Debug.Location = new System.Drawing.Point(35, 851);
             this.label_Debug.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label_Debug.Name = "label_Debug";
-            this.label_Debug.Size = new System.Drawing.Size(256, 148);
+            this.label_Debug.Size = new System.Drawing.Size(388, 148);
             this.label_Debug.TabIndex = 102;
             // 
             // timerMsg100ms
