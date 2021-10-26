@@ -276,16 +276,19 @@ namespace EDCHOST22
             byte[] Message = game.PackCarAMessage();
 
             // 从小车接收的信息
-            byte[] ByteFromCarArray = new byte[1] { (byte)07 };
+            byte[] ByteFromCarArray = null;
 
             // 通过串口1发送给A车
             if (serial1 != null && serial1.IsOpen)
             {
                 serial1.Write(Message, 0, 38);
-                //serial1.Read(ByteFromCarArray, 0, 1);
-                if (ByteFromCarArray[0] != (byte)07)
+                ByteFromCarArray = System.Text.Encoding.Default.GetBytes(serial1.ReadExisting());
+                if (ByteFromCarArray != null)
                 {
-                    CurrentBeaconType = (MineType)ByteFromCarArray[0];
+                    for (int i = 0; i < ByteFromCarArray.Length; i++)
+                    {
+                        CurrentBeaconType = (MineType)ByteFromCarArray[i];
+                    }
                 }
             }
             ShowMessage(Message);
@@ -299,17 +302,21 @@ namespace EDCHOST22
             byte[] Message = game.PackCarBMessage();
 
             // 从小车接收的信息
-            byte[] ByteFromCarArray = new byte[1] { (byte)07 };
+            byte[] ByteFromCarArray = null;
 
             // 通过串口2发送给B车
             if (serial2 != null && serial2.IsOpen)
             {
                 serial2.Write(Message, 0, 38);
-                //serial2.Read(ByteFromCarArray, 0, 1);
-                if (ByteFromCarArray[0] != (byte)07)
+                ByteFromCarArray = System.Text.Encoding.Default.GetBytes(serial2.ReadExisting());
+                if (ByteFromCarArray != null)
                 {
-                    CurrentBeaconType = (MineType)ByteFromCarArray[0];
+                    for (int i = 0; i < ByteFromCarArray.Length; i++)
+                    {
+                        CurrentBeaconType = (MineType)ByteFromCarArray[i];
+                    }
                 }
+
             }
             ShowMessage(Message);
             validPorts = SerialPort.GetPortNames();

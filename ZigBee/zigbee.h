@@ -1,17 +1,16 @@
 /********************************
 zigbee.h
-½ÓÊÜÉÏÎ»»úµÄÊı¾İ
-½ÓÊÕËµÃ÷£¨ÒÔUSART2ÎªÀı£©
-    ÔÚ³ÌĞò¿ªÊ¼µÄÊ±ºòÊ¹ÓÃzigbee_Init(&huart2)½øĞĞ³õÊ¼»¯;
-    ÔÚ»Øµ÷º¯ÊıÖĞÊ¹ÓÃzigbeeMessageRecord(void)¼ÇÂ¼Êı¾İ£¬²¢ÖØĞÂ¿ªÆôÖĞ¶Ï
-
-Êı¾İËµÃ÷
-     struct BasicInfo Game;//´¢´æ±ÈÈüÊ±¼ä¡¢±ÈÈü×´Ì¬ĞÅÏ¢
-     struct CarInfo CarInfo;//´¢´æ³µÁ¾ĞÅÏ¢
-     struct ParkDotInfo ParkDotInfo;//´¢´æÍ£³µµãÄÜ¹»´æ´¢µÄ½ğ¿óÖÖÀàĞÅÏ¢
-     struct MyBeaconInfo MyBeaconInfo;//´¢´æ¼º·½ĞÅ±ê³äµ±²Ö¿â´æ´¢µÄ½ğ¿óÖÖÀàĞÅÏ¢
-     struct MineInfo MineInfo;//´¢´æ½ğ¿óÇ¿¶ÈÓĞĞ§ĞÔĞÅÏ¢
-    Í¨¹ı½Ó¿Ú»ñÈ¡Êı¾İ
+æ¥å—ä¸Šä½æœºçš„æ•°æ®
+æ¥æ”¶è¯´æ˜ï¼ˆä»¥USART2ä¸ºä¾‹ï¼‰
+    åœ¨ç¨‹åºå¼€å§‹çš„æ—¶å€™ä½¿ç”¨zigbee_Init(&huart2)è¿›è¡Œåˆå§‹åŒ–;
+    åœ¨å›è°ƒå‡½æ•°ä¸­ä½¿ç”¨zigbeeMessageRecord(void)è®°å½•æ•°æ®ï¼Œå¹¶é‡æ–°å¼€å¯ä¸­æ–­
+æ•°æ®è¯´æ˜
+     struct BasicInfo Game;//å‚¨å­˜æ¯”èµ›æ—¶é—´ã€æ¯”èµ›çŠ¶æ€ä¿¡æ¯
+     struct CarInfo CarInfo;//å‚¨å­˜è½¦è¾†ä¿¡æ¯
+     struct ParkDotInfo ParkDotInfo;//å‚¨å­˜åœè½¦ç‚¹èƒ½å¤Ÿå­˜å‚¨çš„é‡‘çŸ¿ç§ç±»ä¿¡æ¯
+     struct MyBeaconInfo MyBeaconInfo;//å‚¨å­˜å·±æ–¹ä¿¡æ ‡å……å½“ä»“åº“å­˜å‚¨çš„é‡‘çŸ¿ç§ç±»ä¿¡æ¯
+     struct MineInfo MineInfo;//å‚¨å­˜é‡‘çŸ¿å¼ºåº¦æœ‰æ•ˆæ€§ä¿¡æ¯
+    é€šè¿‡æ¥å£è·å–æ•°æ®
 **********************************/
 
 #ifndef ZIGBEE_H
@@ -28,85 +27,88 @@ struct Position
 
 struct BasicInfo
 {
-    uint8_t GameState; //±ÈÈü×´Ì¬£ºÎ´¿ªÊ¼00£¬½øĞĞÖĞ01£¬ÔİÍ£10£¬½áÊø11
-    uint16_t Time; //±ÈÈüÊ±¼ä£¬ÒÔ0.1sÎªµ¥Î»
+    uint8_t GameState; //æ¯”èµ›çŠ¶æ€ï¼šæœªå¼€å§‹00ï¼Œè¿›è¡Œä¸­01ï¼Œæš‚åœ10ï¼Œç»“æŸ11
+    uint16_t Time; //æ¯”èµ›æ—¶é—´ï¼Œä»¥0.1sä¸ºå•ä½
 };
 
 struct CarInfo {
-    uint8_t Task;//³µÁ¾ÈÎÎñ£º0ÉÏ°ë³¡ÈÎÎñ£¬1ÏÂ°ë³¡ÈÎÎñ
-    uint8_t MineSumNum;//³µÁ¾Ä¿Ç°ÔØÓĞ½ğ¿óµÄ×ÜÊıÄ¿
-    uint8_t MineANum;//³µÁ¾Ä¿Ç°ÔØÓĞ½ğ¿óAµÄÊıÄ¿
-    uint8_t MineBNum;//³µÁ¾Ä¿Ç°ÔØÓĞ½ğ¿óBµÄÊıÄ¿
-    uint8_t MineCNum;//³µÁ¾Ä¿Ç°ÔØÓĞ½ğ¿óCµÄÊıÄ¿
-    uint8_t MineDNum;//³µÁ¾Ä¿Ç°ÔØÓĞ½ğ¿óDµÄÊıÄ¿
-    struct Position Pos;//Ğ¡³µÎ»ÖÃ
-    uint8_t IsCarPosValid;//³µÁ¾Î»ÖÃĞÅÏ¢ÊÇ·ñÓĞĞ§ ĞÅÏ¢ÓĞĞ§Îª1£¬ÎŞĞ§Îª0
-    uint8_t Zone;//0ÎªÔÚÖÜ±ßµÀÂ·ÇøÓò£¬1ÎªÔÚÖĞÑë¿óÇø
-    uint16_t Score;//µÃ·Ö  
+    uint8_t Task;//è½¦è¾†ä»»åŠ¡ï¼š0ä¸ŠåŠåœºä»»åŠ¡ï¼Œ1ä¸‹åŠåœºä»»åŠ¡
+    uint8_t MineSumNum;//è½¦è¾†ç›®å‰è½½æœ‰é‡‘çŸ¿çš„æ€»æ•°ç›®
+    uint8_t MineANum;//è½¦è¾†ç›®å‰è½½æœ‰é‡‘çŸ¿Açš„æ•°ç›®
+    uint8_t MineBNum;//è½¦è¾†ç›®å‰è½½æœ‰é‡‘çŸ¿Bçš„æ•°ç›®
+    uint8_t MineCNum;//è½¦è¾†ç›®å‰è½½æœ‰é‡‘çŸ¿Cçš„æ•°ç›®
+    uint8_t MineDNum;//è½¦è¾†ç›®å‰è½½æœ‰é‡‘çŸ¿Dçš„æ•°ç›®
+    struct Position Pos;//å°è½¦ä½ç½®
+    uint8_t IsCarPosValid;//è½¦è¾†ä½ç½®ä¿¡æ¯æ˜¯å¦æœ‰æ•ˆ ä¿¡æ¯æœ‰æ•ˆä¸º1ï¼Œæ— æ•ˆä¸º0
+    uint8_t Zone;//0ä¸ºåœ¨å‘¨è¾¹é“è·¯åŒºåŸŸï¼Œ1ä¸ºåœ¨ä¸­å¤®çŸ¿åŒº
+    uint16_t Score;//å¾—åˆ†  
 
 
-    uint32_t MineIntensity[2];//Ğ¡³µÖĞĞÄ´¦µÄÁ½½ğ¿óÇ¿¶È
-    uint16_t DistanceOfMyBeacon[3];//Ğ¡³µµ½¼º·½3¸öĞÅ±êµÄ¾àÀë
-    uint8_t IsDistanceOfMyBeaconValid[3];//Ğ¡³µµ½¼º·½3¸öĞÅ±ê¾àÀëÊÇ·ñÓĞĞ§ ĞÅÏ¢ÓĞĞ§Îª1£¬ÎŞĞ§Îª0
-    uint16_t DistanceOfRivalBeacon[3];//Ğ¡³µµ½¶Ô·½3¸öĞÅ±êµÄ¾àÀë
-    uint8_t IsDistanceOfRivalBeaconValid[3];//Ğ¡³µµ½¶Ô·½3¸öĞÅ±ê¾àÀëÊÇ·ñÓĞĞ§ ĞÅÏ¢ÓĞĞ§Îª1£¬ÎŞĞ§Îª0
+    uint32_t MineIntensity[2];//å°è½¦ä¸­å¿ƒå¤„çš„ä¸¤é‡‘çŸ¿å¼ºåº¦
+    uint16_t DistanceOfMyBeacon[3];//å°è½¦åˆ°å·±æ–¹3ä¸ªä¿¡æ ‡çš„è·ç¦»
+    uint8_t IsDistanceOfMyBeaconValid[3];//å°è½¦åˆ°å·±æ–¹3ä¸ªä¿¡æ ‡è·ç¦»æ˜¯å¦æœ‰æ•ˆ ä¿¡æ¯æœ‰æ•ˆä¸º1ï¼Œæ— æ•ˆä¸º0
+    uint16_t DistanceOfRivalBeacon[3];//å°è½¦åˆ°å¯¹æ–¹3ä¸ªä¿¡æ ‡çš„è·ç¦»
+    uint8_t IsDistanceOfRivalBeaconValid[3];//å°è½¦åˆ°å¯¹æ–¹3ä¸ªä¿¡æ ‡è·ç¦»æ˜¯å¦æœ‰æ•ˆ ä¿¡æ¯æœ‰æ•ˆä¸º1ï¼Œæ— æ•ˆä¸º0
     
 };
 
 struct ParkDotInfo {
-    uint8_t ParkDotMineType[8];//8¸öÍ£³µµãÄÜ¹»´æ´¢µÄ½ğ¿óÖÖÀà
+    uint8_t ParkDotMineType[8];//8ä¸ªåœè½¦ç‚¹èƒ½å¤Ÿå­˜å‚¨çš„é‡‘çŸ¿ç§ç±»
 };
 
 struct MyBeaconInfo{
-    uint8_t MyBeaconMineType[3];//¼º·½3¸öĞÅ±ê³äµ±µÄ´æ´¢²Ö¿â´æ´¢½ğ¿óÖÖÀà
+    uint8_t MyBeaconMineType[3];//å·±æ–¹3ä¸ªä¿¡æ ‡å……å½“çš„å­˜å‚¨ä»“åº“å­˜å‚¨é‡‘çŸ¿ç§ç±»
 };
 
 struct MineInfo
 {
-    uint8_t IsMineIntensityValid[2]; //½ğ¿óÇ¿¶ÈÊÇ·ñÓĞĞ§ ÓĞĞ§Îª1£¬ÎŞĞ§Îª0
-    uint8_t MineArrayType[2];//½ğ¿óÖÖÀà
+    uint8_t IsMineIntensityValid[2]; //é‡‘çŸ¿å¼ºåº¦æ˜¯å¦æœ‰æ•ˆ æœ‰æ•ˆä¸º1ï¼Œæ— æ•ˆä¸º0
+    uint8_t MineArrayType[2];//é‡‘çŸ¿ç§ç±»
 };
 
 enum GameStateEnum
 {
-    GameNotStart,	//Î´¿ªÊ¼
-    GameGoing,		//½øĞĞÖĞ
-    GamePause,		//ÔİÍ£ÖĞ
-    GameOver			//ÒÑ½áÊø
+    GameNotStart,	//æœªå¼€å§‹
+    GameGoing,		//è¿›è¡Œä¸­
+    GamePause,		//æš‚åœä¸­
+    GameOver			//å·²ç»“æŸ
 };
 
 
-/**************½Ó¿Ú*************************/
-void zigbee_Init(UART_HandleTypeDef* huart);    //³õÊ¼»¯
-void zigbeeMessageRecord(void);							//ÊµÊ±¼ÇÂ¼ĞÅÏ¢£¬ÔÚÃ¿´Î½ÓÊÕÍê³Éºó¸üĞÂÊı¾İ£¬ÖØĞÂ¿ªÆôÖĞ¶Ï
+/**************æ¥å£*************************/
+void zigbee_Init(UART_HandleTypeDef* huart);    //åˆå§‹åŒ–
+void zigbeeMessageRecord(void);							//å®æ—¶è®°å½•ä¿¡æ¯ï¼Œåœ¨æ¯æ¬¡æ¥æ”¶å®Œæˆåæ›´æ–°æ•°æ®ï¼Œé‡æ–°å¼€å¯ä¸­æ–­
+void zigbeeMessageSend(int BeaconNo);   //å°è½¦æ”¾ç½®ä¿¡æ ‡åŒæ—¶å‘é€çš„æ¶ˆæ¯
 
-uint16_t getGameTime(void);	                                //»ñÈ¡±ÈÈüÊ±¼ä£¬µ¥Î»Îª0.1s
-enum GameStateEnum getGameState(void);			//»ñÈ¡±ÈÈü×´Ì¬
-uint16_t getCarTask(void);                                        //»ñÈ¡³µÁ¾ÈÎÎñ
-uint16_t getIsMineIntensityValid(int MineNo);          //»ñÈ¡½ğ¿óÇ¿¶ÈÊÇ·ñÓĞĞ§ ÓĞĞ§Îª1£¬ÎŞĞ§Îª0
-uint16_t getMineArrayType(int MineNo);                 //»ñÈ¡³¡ÉÏ2¸ö½ğ¿óµÄÖÖÀà
-uint16_t getParkDotMineType(int ParkDotNo);                 //»ñÈ¡8¸öÍ£³µµãÄÜ¹»´æ´¢µÄ½ğ¿óÖÖÀà
-uint16_t getMyBeaconMineType(int BeaconNo);                 //»ñÈ¡3¸ö¼º·½ĞÅ±ê³äµ±²Ö¿â¿É´æ´¢µÄ½ğ¿óÀàĞÍ
-uint16_t getCarMineSumNum(void);                                //»ñÈ¡³µÁ¾Ä¿Ç°ÔØÓĞ½ğ¿óµÄ×ÜÊıÄ¿
-uint16_t getCarMineANum(void);                                //»ñÈ¡³µÁ¾Ä¿Ç°ÔØÓĞ½ğ¿óAµÄÊıÄ¿
-uint16_t getCarMineBNum(void);                                //»ñÈ¡³µÁ¾Ä¿Ç°ÔØÓĞ½ğ¿óBµÄÊıÄ¿
-uint16_t getCarMineCNum(void);                                //»ñÈ¡³µÁ¾Ä¿Ç°ÔØÓĞ½ğ¿óCµÄÊıÄ¿
-uint16_t getCarMineDNum(void);                                //»ñÈ¡³µÁ¾Ä¿Ç°ÔØÓĞ½ğ¿óDµÄÊıÄ¿
-uint16_t getCarPosX(void);		                                //»ñÈ¡Ğ¡³µx×ø±ê
-uint16_t getCarPosY(void);			                            //»ñÈ¡Ğ¡³µy×ø±ê
-struct Position getCarPos(void);	                            //»ñÈ¡Ğ¡³µÎ»ÖÃ
-uint32_t getMineIntensity(int MineNo);                   //»ñÈ¡Ğ¡³µÖĞĞÄ´¦µÄÁ½½ğ¿óÇ¿¶È
-uint16_t getDistanceOfMyBeacon(int BeaconNo); //»ñÈ¡Ğ¡³µµ½¼º·½3¸öĞÅ±êµÄ¾àÀë
-uint16_t getDistanceOfRivalBeacon(int BeaconNo); //»ñÈ¡Ğ¡³µµ½¶Ô·½3¸öĞÅ±êµÄ¾àÀë
-uint16_t getCarZone(void);                                       //»ñÈ¡³µÁ¾ËùÔÚÇøÓòĞÅÏ¢
-uint16_t getIsCarPosValid(void);                              //»ñÈ¡³µÁ¾Î»ÖÃĞÅÏ¢ÊÇ·ñÓĞĞ§
-uint16_t getIsDistanceOfMyBeaconValid(int BeaconNo);       //»ñÈ¡Ğ¡³µµ½¼º·½3¸öĞÅ±ê¾àÀëÊÇ·ñÓĞĞ§
-uint16_t getIsDistanceOfRivalBeaconValid(int BeaconNo);    //»ñÈ¡Ğ¡³µµ½¶Ô·½3¸öĞÅ±ê¾àÀëÊÇ·ñÓĞĞ§
-uint16_t getCarScore(void);                                   //»ñÈ¡³µÁ¾µÃ·Ö
+uint16_t getGameTime(void);	                                //è·å–æ¯”èµ›æ—¶é—´ï¼Œå•ä½ä¸º0.1s
+enum GameStateEnum getGameState(void);			//è·å–æ¯”èµ›çŠ¶æ€
+uint16_t getCarTask(void);                                        //è·å–è½¦è¾†ä»»åŠ¡
+uint16_t getIsMineIntensityValid(int MineNo);          //è·å–é‡‘çŸ¿å¼ºåº¦æ˜¯å¦æœ‰æ•ˆ æœ‰æ•ˆä¸º1ï¼Œæ— æ•ˆä¸º0
+uint16_t getMineArrayType(int MineNo);                 //è·å–åœºä¸Š2ä¸ªé‡‘çŸ¿çš„ç§ç±»
+uint16_t getParkDotMineType(int ParkDotNo);                 //è·å–8ä¸ªåœè½¦ç‚¹èƒ½å¤Ÿå­˜å‚¨çš„é‡‘çŸ¿ç§ç±»
+uint16_t getMyBeaconMineType(int BeaconNo);                 //è·å–3ä¸ªå·±æ–¹ä¿¡æ ‡å……å½“ä»“åº“å¯å­˜å‚¨çš„é‡‘çŸ¿ç±»å‹
+uint16_t getCarMineSumNum(void);                                //è·å–è½¦è¾†ç›®å‰è½½æœ‰é‡‘çŸ¿çš„æ€»æ•°ç›®
+uint16_t getCarMineANum(void);                                //è·å–è½¦è¾†ç›®å‰è½½æœ‰é‡‘çŸ¿Açš„æ•°ç›®
+uint16_t getCarMineBNum(void);                                //è·å–è½¦è¾†ç›®å‰è½½æœ‰é‡‘çŸ¿Bçš„æ•°ç›®
+uint16_t getCarMineCNum(void);                                //è·å–è½¦è¾†ç›®å‰è½½æœ‰é‡‘çŸ¿Cçš„æ•°ç›®
+uint16_t getCarMineDNum(void);                                //è·å–è½¦è¾†ç›®å‰è½½æœ‰é‡‘çŸ¿Dçš„æ•°ç›®
+uint16_t getCarPosX(void);		                                //è·å–å°è½¦xåæ ‡
+uint16_t getCarPosY(void);			                            //è·å–å°è½¦yåæ ‡
+struct Position getCarPos(void);	                            //è·å–å°è½¦ä½ç½®
+uint32_t getMineIntensity(int MineNo);                   //è·å–å°è½¦ä¸­å¿ƒå¤„çš„ä¸¤é‡‘çŸ¿å¼ºåº¦
+uint16_t getDistanceOfMyBeacon(int BeaconNo); //è·å–å°è½¦åˆ°å·±æ–¹3ä¸ªä¿¡æ ‡çš„è·ç¦»
+uint16_t getDistanceOfRivalBeacon(int BeaconNo); //è·å–å°è½¦åˆ°å¯¹æ–¹3ä¸ªä¿¡æ ‡çš„è·ç¦»
+uint16_t getCarZone(void);                                       //è·å–è½¦è¾†æ‰€åœ¨åŒºåŸŸä¿¡æ¯
+uint16_t getIsCarPosValid(void);                              //è·å–è½¦è¾†ä½ç½®ä¿¡æ¯æ˜¯å¦æœ‰æ•ˆ
+uint16_t getIsDistanceOfMyBeaconValid(int BeaconNo);       //è·å–å°è½¦åˆ°å·±æ–¹3ä¸ªä¿¡æ ‡è·ç¦»æ˜¯å¦æœ‰æ•ˆ
+uint16_t getIsDistanceOfRivalBeaconValid(int BeaconNo);    //è·å–å°è½¦åˆ°å¯¹æ–¹3ä¸ªä¿¡æ ‡è·ç¦»æ˜¯å¦æœ‰æ•ˆ
+uint16_t getCarScore(void);                                   //è·å–è½¦è¾†å¾—åˆ†
 
 
 void Decode();
 int receiveIndexMinus(int index_h, int num);
 int receiveIndexAdd(int index_h, int num);
+
+
 
 #endif // V0_5_H_INCLUDED

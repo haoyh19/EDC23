@@ -1,31 +1,54 @@
 #include"zigbee.h"
-volatile uint8_t zigbeeReceive[ZIGBEE_MESSAGE_LENTH];	//ÊµÊ±¼ÇÂ¼ÊÕµ½µÄĞÅÏ¢
-volatile uint8_t zigbeeMessage[ZIGBEE_MESSAGE_LENTH];//¾­¹ıÕûÀíË³ĞòºóµÃµ½µÄĞÅÏ¢
+
+volatile uint8_t zigbeeReceive[ZIGBEE_MESSAGE_LENTH];	//å®æ—¶è®°å½•æ”¶åˆ°çš„ä¿¡æ¯
+volatile uint8_t zigbeeMessage[ZIGBEE_MESSAGE_LENTH];//ç»è¿‡æ•´ç†é¡ºåºåå¾—åˆ°çš„ä¿¡æ¯
+volatile uint8_t zigbeeSend[4] = {0x01,0x02,0x03,0x04};  //å°è½¦ç»™ä¸Šä½æœºå‘é€çš„ä¿¡æ¯
 volatile int message_index = 0;
 volatile int message_head = -1;
 uint8_t zigbeeBuffer[1];
 
 UART_HandleTypeDef* zigbee_huart;
 
-volatile struct BasicInfo Game;//´¢´æ±ÈÈüÊ±¼ä¡¢±ÈÈü×´Ì¬ĞÅÏ¢
-volatile struct CarInfo CarInfo;//´¢´æ³µÁ¾ĞÅÏ¢
-volatile struct ParkDotInfo ParkDotInfo;//´¢´æÍ£³µµãÄÜ¹»´æ´¢µÄ½ğ¿óÖÖÀàĞÅÏ¢
-volatile struct MyBeaconInfo MyBeaconInfo;//´¢´æ¼º·½ĞÅ±ê³äµ±²Ö¿â´æ´¢µÄ½ğ¿óÖÖÀàĞÅÏ¢
-volatile struct MineInfo MineInfo;//´¢´æ½ğ¿óÇ¿¶ÈÓĞĞ§ĞÔĞÅÏ¢
+volatile struct BasicInfo Game;//å‚¨å­˜æ¯”èµ›æ—¶é—´ã€æ¯”èµ›çŠ¶æ€ä¿¡æ¯
+volatile struct CarInfo CarInfo;//å‚¨å­˜è½¦è¾†ä¿¡æ¯
+volatile struct ParkDotInfo ParkDotInfo;//å‚¨å­˜åœè½¦ç‚¹èƒ½å¤Ÿå­˜å‚¨çš„é‡‘çŸ¿ç§ç±»ä¿¡æ¯
+volatile struct MyBeaconInfo MyBeaconInfo;//å‚¨å­˜å·±æ–¹ä¿¡æ ‡å……å½“ä»“åº“å­˜å‚¨çš„é‡‘çŸ¿ç§ç±»ä¿¡æ¯
+volatile struct MineInfo MineInfo;//å‚¨å­˜é‡‘çŸ¿å¼ºåº¦æœ‰æ•ˆæ€§ä¿¡æ¯
 
-/***********************½Ó¿Ú****************************/
-void zigbee_Init(UART_HandleTypeDef *huart)
+/***********************æ¥å£****************************/
+/*void zigbee_Init(UART_HandleTypeDef *huart)
 {
 	zigbee_huart = huart;
 	HAL_UART_Receive_IT(zigbee_huart, zigbeeBuffer, 1);
+}*/
+
+
+void zigbee_Init(UART_HandleTypeDef *huart)
+{
+	zigbee_huart = huart;
+    HAL_UART_Receive_DMA(zigbee_huart,zigbeeMessage,ZIGBEE_MESSAGE_LENTH);
 }
+
 void zigbeeMessageRecord(void)
 {
+	if(zigbeeMessage[ZIGBEE_MESSAGE_LENTH -2] ==0x0D && zigbeeMessage[ZIGBEE_MESSAGE_LENTH -1 ] == 0x0A )
+	{
+		for (int i = 0; i < ZIGBEE_MESSAGE_LENTH; i++)
+			{
+				zigbeeReceive[i] = zigbeeMessage[i];
+			}
+			Decode();
+	}
+	HAL_UART_Receive_DMA(zigbee_huart,zigbeeMessage,ZIGBEE_MESSAGE_LENTH);
+}
+
+/*void zigbeeMessageRecord(void)
+{
 	zigbeeMessage[message_index] = zigbeeBuffer[0];
-	message_index = receiveIndexAdd(message_index, 1);    //Ò»¸ö¼òµ¥µÄË÷ÒıÊıÔö¼Óº¯Êı
+	message_index = receiveIndexAdd(message_index, 1);    //ä¸€ä¸ªç®€å•çš„ç´¢å¼•æ•°å¢åŠ å‡½æ•°
 
 	if (zigbeeMessage[receiveIndexMinus(message_index, 2)] == 0x0D
-		&& zigbeeMessage[receiveIndexMinus(message_index, 1)] == 0x0A)//Ò»´®ĞÅÏ¢µÄ½áÎ²
+		&& zigbeeMessage[receiveIndexMinus(message_index, 1)] == 0x0A)//ä¸€ä¸²ä¿¡æ¯çš„ç»“å°¾
 	{
 		if (receiveIndexMinus(message_index, message_head) == 0)
 		{
@@ -42,9 +65,17 @@ void zigbeeMessageRecord(void)
 		{
 			message_head = message_index;
 		}
-	}
+	} 
 	HAL_UART_Receive_IT(zigbee_huart, zigbeeBuffer, 1);
+}*/
+
+
+
+void zigbeeMessageSend(int BeaconNo)
+{
+	HAL_UART_Transmit(zigbee_huart,zigbeeSend+BeaconNo,1,HAL_MAX_DELAY);
 }
+
 uint16_t getGameTime(void) {
 	return Game.Time;
 }
@@ -70,46 +101,46 @@ enum GameStateEnum getGameState(void)
 	return GameNotStart;
 }
 uint16_t getCarTask(void) {
-	return (uint16_t)CarInfo.Task;
+	return (uint16_t)(CarInfo.Task);
 }
 uint16_t getIsMineIntensityValid(int MineNo) {
 	if (MineNo != 0 && MineNo != 1)
 		return (uint16_t)INVALID_ARG;
 	else
-		return (uint16_t)MineInfo.IsMineIntensityValid[MineNo];
+		return (uint16_t)(MineInfo.IsMineIntensityValid[MineNo]);
 }
 uint16_t getMineArrayType(int MineNo) {
 	if (MineNo != 0 && MineNo != 1)
 		return (uint16_t)INVALID_ARG;
 	else
-		return (uint16_t)MineInfo.MineArrayType[MineNo];
+		return (uint16_t)(MineInfo.MineArrayType[MineNo]);
 }
 uint16_t getParkDotMineType(int ParkDotNo) {
 	if (ParkDotNo < 0 || ParkDotNo > 7)
 		return (uint16_t)INVALID_ARG;
 	else
-		return (uint16_t)ParkDotInfo.ParkDotMineType[ParkDotNo];
+		return (uint16_t)(ParkDotInfo.ParkDotMineType[ParkDotNo]);
 }
 uint16_t getMyBeaconMineType(int BeaconNo) {
 	if (BeaconNo != 0 && BeaconNo != 1 && BeaconNo != 2)
 		return (uint16_t)INVALID_ARG;
 	else
-		return (uint16_t)MyBeaconInfo.MyBeaconMineType[BeaconNo];
+		return (uint16_t)(MyBeaconInfo.MyBeaconMineType[BeaconNo]);
 }
 uint16_t getCarMineSumNum(void) {
-	return (uint16_t)CarInfo.MineSumNum;
+	return (uint16_t)(CarInfo.MineSumNum);
 }
 uint16_t getCarMineANum(void) {
-	return (uint16_t)CarInfo.MineANum;
+	return (uint16_t)(CarInfo.MineANum);
 }
 uint16_t getCarMineBNum(void) {
-	return (uint16_t)CarInfo.MineBNum;
+	return (uint16_t)(CarInfo.MineBNum);
 }
 uint16_t getCarMineCNum(void) {
-	return (uint16_t)CarInfo.MineCNum;
+	return (uint16_t)(CarInfo.MineCNum);
 }
 uint16_t getCarMineDNum(void) {
-	return (uint16_t)CarInfo.MineDNum;
+	return (uint16_t)(CarInfo.MineDNum);
 }
 uint16_t getCarPosX(void) {
 	return CarInfo.Pos.x;
@@ -139,22 +170,22 @@ uint16_t getDistanceOfRivalBeacon(int BeaconNo) {
 		return CarInfo.DistanceOfRivalBeacon[BeaconNo];
 }
 uint16_t getCarZone(void) {
-	return (uint16_t)CarInfo.Zone;
+	return (uint16_t)(CarInfo.Zone);
 }
 uint16_t getIsCarPosValid(void) {
-	return (uint16_t)CarInfo.IsCarPosValid;
+	return (uint16_t)(CarInfo.IsCarPosValid);
 }
 uint16_t getIsDistanceOfMyBeaconValid(int BeaconNo) {
 	if (BeaconNo != 0 && BeaconNo != 1 && BeaconNo != 2)
 		return (uint16_t)INVALID_ARG;
 	else
-		return (uint16_t)CarInfo.IsDistanceOfMyBeaconValid[BeaconNo];
+		return (uint16_t)(CarInfo.IsDistanceOfMyBeaconValid[BeaconNo]);
 }
 uint16_t getIsDistanceOfRivalBeaconValid(int BeaconNo) {
 	if (BeaconNo != 0 && BeaconNo != 1 && BeaconNo != 2)
 		return (uint16_t)INVALID_ARG;
 	else
-		return (uint16_t)CarInfo.IsDistanceOfRivalBeaconValid[BeaconNo];
+		return (uint16_t)(CarInfo.IsDistanceOfRivalBeaconValid[BeaconNo]);
 }
 uint16_t getCarScore(void) {
 	return CarInfo.Score;
@@ -179,7 +210,7 @@ void DecodeCarInfo(){
 	CarInfo.Zone = (zigbeeReceive[33] & 0x80) >> 7;
 	CarInfo.Score = (zigbeeReceive[34] << 8) + zigbeeReceive[35];
 	for (int i = 0; i < 2; i++) {
-		CarInfo.MineIntensity[i] = zigbeeReceive[11+4*i] << 24 + zigbeeReceive[12 + 4 * i] << 16 + zigbeeReceive[13 + 4 * i] << 8 + zigbeeReceive[14 + 4 * i];
+		CarInfo.MineIntensity[i] = (zigbeeReceive[11+4*i] << 24) + (zigbeeReceive[12 + 4 * i] << 16) + (zigbeeReceive[13 + 4 * i] << 8) + (zigbeeReceive[14 + 4 * i]);
 	}
 	for (int i = 0; i < 3; i++) {
 		CarInfo.DistanceOfMyBeacon[i] = (zigbeeReceive[19+2*i] << 8) + zigbeeReceive[20+2*i];
@@ -204,7 +235,7 @@ void DecodeParkDotInfo() {
 	ParkDotInfo.ParkDotMineType[6] = (zigbeeReceive[32] & 0x0C) >> 2;
 	ParkDotInfo.ParkDotMineType[7] = zigbeeReceive[32] & 0x03;
 }
-void DecodeMyBeaconInfo() {
+void DecodeMyBeaconInfo(){
 	MyBeaconInfo.MyBeaconMineType[0] = (zigbeeReceive[10] & 0xC0) >> 6;
 	MyBeaconInfo.MyBeaconMineType[1] = (zigbeeReceive[10] & 0x30) >> 4;
 	MyBeaconInfo.MyBeaconMineType[2] = (zigbeeReceive[10] & 0x0C) >> 2;
@@ -224,7 +255,7 @@ void Decode()
 	DecodeMyBeaconInfo();
 	DecodeMineInfo();
 }
-int receiveIndexMinus(int index_h, int num)
+/*int receiveIndexMinus(int index_h, int num)
 {
 	if (index_h - num >= 0)
 	{
@@ -245,5 +276,6 @@ int receiveIndexAdd(int index_h, int num)
 	{
 		return index_h + num - ZIGBEE_MESSAGE_LENTH;
 	}
-}
+}*/
+
 
