@@ -520,25 +520,32 @@ namespace EDCHOST22
                             if (Tx + Tcol > mat.Cols) Tcol = mat.Cols - Tx;
                             if (Ty + Trow > mat.Rows) Trow = mat.Rows - Ty;
                             Mat Pos = new Mat(mat, new Rect(Tx, Ty, Tcol, Trow));
-                            switch (mineTypes[i])
+                            if (game.mGameStage == GameStage.FIRST_A || game.mGameStage == GameStage.FIRST_B)
                             {
-                                case MineType.A:
-                                    {
-                                        Icon_MineA.CopyTo(Pos); break;
-                                    }
-                                case MineType.B:
-                                    {
-                                        Icon_MineB.CopyTo(Pos); break;
-                                    }
-                                case MineType.C:
-                                    {
-                                        Icon_MineC.CopyTo(Pos); break;
-                                    }
-                                case MineType.D:
-                                    {
-                                        Icon_MineD.CopyTo(Pos); break;
-                                    }
-                            };
+                                Icon_MineA.CopyTo(Pos);
+                            }
+                            else
+                            {
+                                switch (mineTypes[i])
+                                {
+                                    case MineType.A:
+                                        {
+                                            Icon_MineA.CopyTo(Pos); break;
+                                        }
+                                    case MineType.B:
+                                        {
+                                            Icon_MineB.CopyTo(Pos); break;
+                                        }
+                                    case MineType.C:
+                                        {
+                                            Icon_MineC.CopyTo(Pos); break;
+                                        }
+                                    case MineType.D:
+                                        {
+                                            Icon_MineD.CopyTo(Pos); break;
+                                        }
+                                };
+                            }
                         }
                     }
                 }
@@ -564,13 +571,20 @@ namespace EDCHOST22
                     if (Tx + Tcol > mat.Cols) Tcol = mat.Cols - Tx;
                     if (Ty + Trow > mat.Rows) Trow = mat.Rows - Ty;
                     Mat Pos = new Mat(mat, new Rect(Tx, Ty, Tcol, Trow));
-                    switch (game.mMineGenerator.ParkType[i])
+                    if (game.mGameStage == GameStage.FIRST_A || game.mGameStage == GameStage.FIRST_B)
                     {
-                        case MineType.A: Icon_ParkA.CopyTo(Pos);break;
-                        case MineType.B: Icon_ParkB.CopyTo(Pos);break;
-                        case MineType.C: Icon_ParkC.CopyTo(Pos);break;
-                        case MineType.D: Icon_ParkD.CopyTo(Pos);break;
-                    };
+                        Icon_ParkA.CopyTo(Pos);
+                    }
+                    else
+                    {
+                        switch (game.mMineGenerator.ParkType[i])
+                        {
+                            case MineType.A: Icon_ParkA.CopyTo(Pos); break;
+                            case MineType.B: Icon_ParkB.CopyTo(Pos); break;
+                            case MineType.C: Icon_ParkC.CopyTo(Pos); break;
+                            case MineType.D: Icon_ParkD.CopyTo(Pos); break;
+                        };
+                    }
                 }            
             }
 
@@ -775,6 +789,11 @@ namespace EDCHOST22
         // 比赛开始
         private void buttonStart_Click(object sender, EventArgs e)
         {
+            if (flags.clickCount < 4)
+            {
+                MessageBox.Show("未设置边界点!");
+                return;
+            }
             game.Start();
             buttonPause.Enabled = true;
             button_Continue.Enabled = false;

@@ -247,7 +247,8 @@ namespace EDCHOST22
                 }
                 catch (UnauthorizedAccessException)
                 {
-
+                    MessageBox.Show("串口设置无效！");
+                    _tracker.serial2 = null;
                 }
             }
         }
@@ -281,7 +282,8 @@ namespace EDCHOST22
                 }
                 catch (UnauthorizedAccessException)
                 {
-
+                    MessageBox.Show("串口设置无效！");
+                    _tracker.serial1 = null;
                 }
             }
         }
