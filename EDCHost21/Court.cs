@@ -8,12 +8,12 @@ namespace EDCHOST22
 {
     class Court     // 此类提供实际比赛场地中需要使用的尺寸和其他参数
     {
-        public const int MAX_SIZE_CM = 270;     // 场地的最大尺寸
-        public const int MAZE_SIZE_CM = 210;    // 场地中心区域的尺寸
+        public const int MAX_SIZE_CM = 254;     // 场地的最大尺寸
+        public const int MAZE_SIZE_CM = 194;    // 场地中心区域的尺寸
         public const int BORDER_CM = 30;   // 周边道路的宽度
         public const int HALF_BORDER_CM = 15;   // 周边道路中心线与道路边缘的距离
-        public const int DISTANCE_PARKIN_AREA = 120;    // 停车点中心点间距
-        public const int COINCIDE_ERR_DIST_CM = 10;  // 判定小车到达某点允许的最大误差距离（碰撞半径）
+        public const int DISTANCE_PARKIN_AREA = 112;    // 停车点中心点间距
+        public const int COINCIDE_ERR_DIST_CM = 8;  // 判定小车到达某点允许的最大误差距离（碰撞半径）
         public const int MINE_LOWERDIST_CM = 20;        // 金矿间的最小距离
         public const int TOTAL_PARKING_AREA = 8;     // 停车点的总个数
         public const int MAX_MINE_DEPTH = 200;  // 矿的最大深度
