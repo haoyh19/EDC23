@@ -268,7 +268,7 @@ namespace EDCHOST22
         }
 
 
-        #region 与小车交互信息？？
+        #region 与小车交互信息
         // 给小车A发送信息
         private void SendCarAMessage()
         {
@@ -940,6 +940,16 @@ namespace EDCHOST22
         }
 
         private void label4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label6_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label9_Click(object sender, EventArgs e)
         {
 
         }

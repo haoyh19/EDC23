@@ -507,13 +507,14 @@
             // 
             // label6
             // 
-            this.label6.BackColor = System.Drawing.Color.DodgerBlue;
+            this.label6.BackColor = System.Drawing.Color.Lime;
             this.label6.ForeColor = System.Drawing.SystemColors.WindowText;
             this.label6.Location = new System.Drawing.Point(242, 286);
             this.label6.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(33, 27);
             this.label6.TabIndex = 125;
+            this.label6.Click += new System.EventHandler(this.label6_Click);
             // 
             // label7
             // 
@@ -537,13 +538,14 @@
             // 
             // label9
             // 
-            this.label9.BackColor = System.Drawing.Color.DodgerBlue;
+            this.label9.BackColor = System.Drawing.Color.Lime;
             this.label9.ForeColor = System.Drawing.SystemColors.WindowText;
             this.label9.Location = new System.Drawing.Point(1720, 286);
             this.label9.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(33, 27);
             this.label9.TabIndex = 129;
+            this.label9.Click += new System.EventHandler(this.label9_Click);
             // 
             // label10
             // 
