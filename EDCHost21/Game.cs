@@ -838,15 +838,13 @@ namespace EDCHOST22
         #region 通信
         public byte[] PackCarAMessage()//已更新到最新通信协议
         {
-            byte[] message = new byte[38]; //上位机传递多少信息
+            byte[] message = new byte[48]; //上位机传递多少信息
             int messageCnt = 0;
-            message[messageCnt++] = (byte)((mGameTime / 1000) >> 8);
-            message[messageCnt++] = (byte)(mGameTime / 1000);
+            message[messageCnt++] = (byte)((mGameTime) >> 8);
+            message[messageCnt++] = (byte)(mGameTime);
             message[messageCnt++] = (byte)((((byte)mGameStage << 6) & 0xC0) | (((byte)CarA.mTaskState << 5) & 0x20) |
                 (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08));
-            message[messageCnt++] = (byte)(CarA.mTransPos.x >> 8);
             message[messageCnt++] = (byte)(CarA.mTransPos.x);
-            message[messageCnt++] = (byte)(CarA.mTransPos.y >> 8);
             message[messageCnt++] = (byte)(CarA.mTransPos.y);
             message[messageCnt++] = (byte)((((byte)mMineArray[0].Type << 6) & 0xC0) | (((byte)mMineArray[1].Type << 4) & 0x30) | ((byte)CarA.mMineStateSum()));
             message[messageCnt++] = (byte)((((byte)CarA.mMineState[(int)MineType.A] << 4) & 0xF0)| ((byte)CarA.mMineState[(int)MineType.B]));
@@ -860,45 +858,75 @@ namespace EDCHOST22
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[1], CarA.mPos) >> 16);
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[1], CarA.mPos) >> 8);
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[1], CarA.mPos));
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[0], CarA.mPos)) >> 8);
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[0], CarA.mPos)));
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[1], CarA.mPos)) >> 8);
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[1], CarA.mPos)));
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[2], CarA.mPos)) >> 8);
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[2], CarA.mPos)));
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[0], CarA.mPos)) >> 8);
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[0], CarA.mPos)));
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[1], CarA.mPos)) >> 8);
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[1], CarA.mPos)));
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[2], CarA.mPos)) >> 8);
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[2], CarA.mPos)));
+            if (mGameStage == GameStage.SECOND_A)
+            {
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[0], CarA.mPos)) >> 8);
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[0], CarA.mPos)));
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[1], CarA.mPos)) >> 8);
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[1], CarA.mPos)));
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[2], CarA.mPos)) >> 8);
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[2], CarA.mPos)));
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[0], CarA.mPos)) >> 8);
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[0], CarA.mPos)));
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[1], CarA.mPos)) >> 8);
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[1], CarA.mPos)));
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[2], CarA.mPos)) >> 8);
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[2], CarA.mPos)));
+            }
+            else
+            {
+                for (int i = 0; i < 12; i++)
+                {
+                    message[messageCnt++] = (byte)0;
+                }
+            }
             message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[0]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[1]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[2]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[3]));
             message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[4]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[5]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[6]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[7]));
             message[messageCnt++] = (byte)(((CarA.mIsInMaze << 7) & 0x80)
                 | ((((mGameState == GameState.NORMAL) && ((mGameStage == GameStage.FIRST_A) || ((mGameStage == GameStage.SECOND_A) && (CarA.mIsInMaze != 1))) ? 1 : 0) << 6) & 0x40)
-                | ((((0 < mBeacon.CarABeaconNum) ? 1 : 0) << 5) & 0x20)
-                | ((((1 < mBeacon.CarABeaconNum) ? 1 : 0) << 4) & 0x10)
-                | ((((2 < mBeacon.CarABeaconNum) ? 1 : 0) << 3) & 0x08)
-                | ((((0 < mBeacon.CarBBeaconNum) ? 1 : 0) << 2) & 0x04)
-                | ((((1 < mBeacon.CarBBeaconNum) ? 1 : 0) << 1) & 0x02)
-                | (((2 < mBeacon.CarBBeaconNum) ? 1 : 0) & 0x01));
+                | ((((0 < mBeacon.CarABeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A) ? 1 : 0) << 5) & 0x20)
+                | ((((1 < mBeacon.CarABeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A) ? 1 : 0) << 4) & 0x10)
+                | ((((2 < mBeacon.CarABeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A) ? 1 : 0) << 3) & 0x08)
+                | ((((0 < mBeacon.CarBBeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A) ? 1 : 0) << 2) & 0x04)
+                | ((((1 < mBeacon.CarBBeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A) ? 1 : 0) << 1) & 0x02)
+                | (((2 < mBeacon.CarBBeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A) ? 1 : 0) & 0x01));
             message[messageCnt++] = (byte)(CarA.MyScore >> 8);
             message[messageCnt++] = (byte)(CarA.MyScore);
+            if (mGameStage == GameStage.SECOND_A)
+            {
+                message[messageCnt++] = (byte)(mBeacon.CarABeacon[0].x);
+                message[messageCnt++] = (byte)(mBeacon.CarABeacon[0].y);
+                message[messageCnt++] = (byte)(mBeacon.CarABeacon[1].x);
+                message[messageCnt++] = (byte)(mBeacon.CarABeacon[1].y);
+                message[messageCnt++] = (byte)(mBeacon.CarABeacon[2].x);
+                message[messageCnt++] = (byte)(mBeacon.CarABeacon[2].y);
+                message[messageCnt++] = (byte)(mBeacon.CarBBeacon[0].x);
+                message[messageCnt++] = (byte)(mBeacon.CarBBeacon[0].y);
+                message[messageCnt++] = (byte)(mBeacon.CarBBeacon[1].x);
+                message[messageCnt++] = (byte)(mBeacon.CarBBeacon[1].y);
+                message[messageCnt++] = (byte)(mBeacon.CarBBeacon[2].x);
+                message[messageCnt++] = (byte)(mBeacon.CarBBeacon[2].y);
+            }
+            else
+            {
+                for (int i = 0; i < 12; i++)
+                {
+                    message[messageCnt++] = (byte)0;
+                }
+            }
             message[messageCnt++] = 0x0D;
             message[messageCnt++] = 0x0A;
             return message;
         }
         public byte[] PackCarBMessage()//已更新到最新通信协议
         {
-            byte[] message = new byte[38]; //上位机传递多少信息
+            byte[] message = new byte[48]; //上位机传递多少信息
             int messageCnt = 0;
-            message[messageCnt++] = (byte)((mGameTime / 1000) >> 8);
-            message[messageCnt++] = (byte)(mGameTime / 1000);
+            message[messageCnt++] = (byte)((mGameTime) >> 8);
+            message[messageCnt++] = (byte)(mGameTime);
             message[messageCnt++] = (byte)((((byte)mGameStage << 6) & 0xC0) | (((byte)CarB.mTaskState << 5) & 0x20) |
                 (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08));
-            message[messageCnt++] = (byte)(CarB.mTransPos.x >> 8);
             message[messageCnt++] = (byte)(CarB.mTransPos.x);
-            message[messageCnt++] = (byte)(CarB.mTransPos.y >> 8);
             message[messageCnt++] = (byte)(CarB.mTransPos.y);
             message[messageCnt++] = (byte)((((byte)mMineArray[0].Type << 6) & 0xC0) | (((byte)mMineArray[1].Type << 4) & 0x30) | ((byte)CarB.mMineStateSum()));
             message[messageCnt++] = (byte)((((byte)CarB.mMineState[(int)MineType.A] << 4) & 0xF0) | ((byte)CarB.mMineState[(int)MineType.B]));
@@ -912,30 +940,62 @@ namespace EDCHOST22
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[1], CarB.mPos) >> 16);
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[1], CarB.mPos) >> 8);
             message[messageCnt++] = (byte)(Mine.GetIntensity(mMineArray[1], CarB.mPos));
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[0], CarB.mPos)) >> 8);
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[0], CarB.mPos)));
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[1], CarB.mPos)) >> 8);
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[1], CarB.mPos)));
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[2], CarB.mPos)) >> 8);
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[2], CarB.mPos)));
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[0], CarB.mPos)) >> 8);
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[0], CarB.mPos)));
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[1], CarB.mPos)) >> 8);
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[1], CarB.mPos)));
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[2], CarB.mPos)) >> 8);
-            message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[2], CarB.mPos)));
+            if (mGameStage == GameStage.SECOND_B)
+            {
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[0], CarB.mPos)) >> 8);
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[0], CarB.mPos)));
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[1], CarB.mPos)) >> 8);
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[1], CarB.mPos)));
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[2], CarB.mPos)) >> 8);
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarBBeacon[2], CarB.mPos)));
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[0], CarB.mPos)) >> 8);
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[0], CarB.mPos)));
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[1], CarB.mPos)) >> 8);
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[1], CarB.mPos)));
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[2], CarB.mPos)) >> 8);
+                message[messageCnt++] = (byte)((int)(Dot.GetDistance(mBeacon.CarABeacon[2], CarB.mPos)));
+            }
+            else
+            {
+                for (int i = 0; i < 12; i++)
+                {
+                    message[messageCnt++] = (byte)0;
+                }
+            }
             message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[0]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[1]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[2]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[3]));
             message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[4]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[5]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[6]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[7]));
             message[messageCnt++] = (byte)(((CarB.mIsInMaze << 7) & 0x80)
                 | ((((mGameState == GameState.NORMAL) && ((mGameStage == GameStage.FIRST_B) || ((mGameStage == GameStage.SECOND_B) && (CarB.mIsInMaze != 1))) ? 1 : 0) << 6) & 0x40)
-                | ((((0 < mBeacon.CarBBeaconNum) ? 1 : 0) << 5) & 0x20)
-                | ((((1 < mBeacon.CarBBeaconNum) ? 1 : 0) << 4) & 0x10)
-                | ((((2 < mBeacon.CarBBeaconNum) ? 1 : 0) << 3) & 0x08)
-                | ((((0 < mBeacon.CarABeaconNum) ? 1 : 0) << 2) & 0x04)
-                | ((((1 < mBeacon.CarABeaconNum) ? 1 : 0) << 1) & 0x02)
-                | (((2 < mBeacon.CarABeaconNum) ? 1 : 0) & 0x01));
+                | ((((0 < mBeacon.CarBBeaconNum) ? 1 : 0) << 5) * ((mGameStage == GameStage.SECOND_B) ? 1 : 0) & 0x20)
+                | ((((1 < mBeacon.CarBBeaconNum) ? 1 : 0) << 4) * ((mGameStage == GameStage.SECOND_B) ? 1 : 0) & 0x10)
+                | ((((2 < mBeacon.CarBBeaconNum) ? 1 : 0) << 3) * ((mGameStage == GameStage.SECOND_B) ? 1 : 0) & 0x08)
+                | ((((0 < mBeacon.CarABeaconNum) ? 1 : 0) << 2) * ((mGameStage == GameStage.SECOND_B) ? 1 : 0) & 0x04)
+                | ((((1 < mBeacon.CarABeaconNum) ? 1 : 0) << 1) * ((mGameStage == GameStage.SECOND_B) ? 1 : 0) & 0x02)
+                | (((2 < mBeacon.CarABeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_B) ? 1 : 0) & 0x01));
             message[messageCnt++] = (byte)(CarB.MyScore >> 8);
             message[messageCnt++] = (byte)(CarB.MyScore);
+            if (mGameStage == GameStage.SECOND_B)
+            {
+                message[messageCnt++] = (byte)(mBeacon.CarBBeacon[0].x);
+                message[messageCnt++] = (byte)(mBeacon.CarBBeacon[0].y);
+                message[messageCnt++] = (byte)(mBeacon.CarBBeacon[1].x);
+                message[messageCnt++] = (byte)(mBeacon.CarBBeacon[1].y);
+                message[messageCnt++] = (byte)(mBeacon.CarBBeacon[2].x);
+                message[messageCnt++] = (byte)(mBeacon.CarBBeacon[2].y);
+                message[messageCnt++] = (byte)(mBeacon.CarABeacon[0].x);
+                message[messageCnt++] = (byte)(mBeacon.CarABeacon[0].y);
+                message[messageCnt++] = (byte)(mBeacon.CarABeacon[1].x);
+                message[messageCnt++] = (byte)(mBeacon.CarABeacon[1].y);
+                message[messageCnt++] = (byte)(mBeacon.CarABeacon[2].x);
+                message[messageCnt++] = (byte)(mBeacon.CarABeacon[2].y);
+            }
+            else
+            {
+                for (int i = 0; i < 12; i++)
+                {
+                    message[messageCnt++] = (byte)0;
+                }
+            }
             message[messageCnt++] = 0x0D;
             message[messageCnt++] = 0x0A;
             return message;

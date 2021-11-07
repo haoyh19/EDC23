@@ -281,7 +281,7 @@ namespace EDCHOST22
             // 通过串口1发送给A车
             if (serial1 != null && serial1.IsOpen)
             {
-                serial1.Write(Message, 0, 38);
+                serial1.Write(Message, 0, 48);
                 ByteFromCarArray = System.Text.Encoding.Default.GetBytes(serial1.ReadExisting());
                 if (ByteFromCarArray != null)
                 {
@@ -307,7 +307,7 @@ namespace EDCHOST22
             // 通过串口2发送给B车
             if (serial2 != null && serial2.IsOpen)
             {
-                serial2.Write(Message, 0, 38);
+                serial2.Write(Message, 0, 48);
                 ByteFromCarArray = System.Text.Encoding.Default.GetBytes(serial2.ReadExisting());
                 if (ByteFromCarArray != null)
                 {
