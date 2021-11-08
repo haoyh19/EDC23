@@ -12,7 +12,7 @@ namespace EDCHOST22
     public class MineGenerator    //进行各回合金矿的生成
     {
         public const int COURTMINENUM = 2;       // 同时存在的金矿数
-        public const int MINELISTNUM = 30;      //第二回合可取用的金矿总数
+        public const int MINELISTNUM = 100;      //第二回合可取用的金矿总数
         
         public Mine[] MineArray1;        // 第一回合设置金矿的数组
         public MineType[] ParkType;            // 编号为i的停车点存储的金矿种类
