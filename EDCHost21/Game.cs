@@ -842,7 +842,7 @@ namespace EDCHOST22
             int messageCnt = 0;
             message[messageCnt++] = (byte)((mGameTime) >> 8);
             message[messageCnt++] = (byte)(mGameTime);
-            message[messageCnt++] = (byte)((((byte)mGameStage << 6) & 0xC0) | (((byte)CarA.mTaskState << 5) & 0x20) |
+            message[messageCnt++] = (byte)((((byte)mGameState << 6) & 0xC0) | (((byte)CarA.mTaskState << 5) & 0x20) |
                 (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08));
             message[messageCnt++] = (byte)(CarA.mTransPos.x);
             message[messageCnt++] = (byte)(CarA.mTransPos.y);
@@ -877,7 +877,7 @@ namespace EDCHOST22
             {
                 for (int i = 0; i < 12; i++)
                 {
-                    message[messageCnt++] = (byte)0;
+                    message[messageCnt++] = (byte)0x00;
                 }
             }
             message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[0]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[1]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[2]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[3]));
@@ -911,7 +911,7 @@ namespace EDCHOST22
             {
                 for (int i = 0; i < 12; i++)
                 {
-                    message[messageCnt++] = (byte)0;
+                    message[messageCnt++] = (byte)0x00;
                 }
             }
             message[messageCnt++] = 0x0D;
@@ -924,7 +924,7 @@ namespace EDCHOST22
             int messageCnt = 0;
             message[messageCnt++] = (byte)((mGameTime) >> 8);
             message[messageCnt++] = (byte)(mGameTime);
-            message[messageCnt++] = (byte)((((byte)mGameStage << 6) & 0xC0) | (((byte)CarB.mTaskState << 5) & 0x20) |
+            message[messageCnt++] = (byte)((((byte)mGameState << 6) & 0xC0) | (((byte)CarB.mTaskState << 5) & 0x20) |
                 (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08));
             message[messageCnt++] = (byte)(CarB.mTransPos.x);
             message[messageCnt++] = (byte)(CarB.mTransPos.y);
@@ -959,7 +959,7 @@ namespace EDCHOST22
             {
                 for (int i = 0; i < 12; i++)
                 {
-                    message[messageCnt++] = (byte)0;
+                    message[messageCnt++] = (byte)0x00;
                 }
             }
             message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[0]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[1]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[2]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[3]));
@@ -993,7 +993,7 @@ namespace EDCHOST22
             {
                 for (int i = 0; i < 12; i++)
                 {
-                    message[messageCnt++] = (byte)0;
+                    message[messageCnt++] = (byte)0x00;
                 }
             }
             message[messageCnt++] = 0x0D;
