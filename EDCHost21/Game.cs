@@ -840,8 +840,9 @@ namespace EDCHOST22
         {
             byte[] message = new byte[48]; //上位机传递多少信息
             int messageCnt = 0;
-            message[messageCnt++] = (byte)((mGameTime) >> 8);
-            message[messageCnt++] = (byte)(mGameTime);
+            int gTimeTrans = mGameTime / 100;
+            message[messageCnt++] = (byte)((gTimeTrans) >> 8);
+            message[messageCnt++] = (byte)(gTimeTrans);
             message[messageCnt++] = (byte)((((byte)mGameState << 6) & 0xC0) | (((byte)CarA.mTaskState << 5) & 0x20) |
                 (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08));
             message[messageCnt++] = (byte)(CarA.mTransPos.x);
@@ -922,8 +923,9 @@ namespace EDCHOST22
         {
             byte[] message = new byte[48]; //上位机传递多少信息
             int messageCnt = 0;
-            message[messageCnt++] = (byte)((mGameTime) >> 8);
-            message[messageCnt++] = (byte)(mGameTime);
+            int gTimeTrans = mGameTime / 100;
+            message[messageCnt++] = (byte)((gTimeTrans) >> 8);
+            message[messageCnt++] = (byte)(gTimeTrans);
             message[messageCnt++] = (byte)((((byte)mGameState << 6) & 0xC0) | (((byte)CarB.mTaskState << 5) & 0x20) |
                 (((byte)mMineInMaze[0] << 4) & 0x10) | (((byte)mMineInMaze[1] << 3) & 0x08));
             message[messageCnt++] = (byte)(CarB.mTransPos.x);
