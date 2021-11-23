@@ -884,13 +884,13 @@ namespace EDCHOST22
             message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[0]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[1]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[2]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[3]));
             message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[4]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[5]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[6]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[7]));
             message[messageCnt++] = (byte)(((CarA.mIsInMaze << 7) & 0x80)
-                | ((((mGameState == GameState.NORMAL) && ((mGameStage == GameStage.FIRST_A) || ((mGameStage == GameStage.SECOND_A) && (CarA.mIsInMaze != 1))) ? 1 : 0) << 6) & 0x40)
-                | ((((0 < mBeacon.CarABeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A) ? 1 : 0) << 5) & 0x20)
-                | ((((1 < mBeacon.CarABeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A) ? 1 : 0) << 4) & 0x10)
-                | ((((2 < mBeacon.CarABeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A) ? 1 : 0) << 3) & 0x08)
-                | ((((0 < mBeacon.CarBBeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A) ? 1 : 0) << 2) & 0x04)
-                | ((((1 < mBeacon.CarBBeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A) ? 1 : 0) << 1) & 0x02)
-                | (((2 < mBeacon.CarBBeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A) ? 1 : 0) & 0x01));
+                | ((((mGameState == GameState.NORMAL) && (CarA.mIsInField != 0) && ((mGameStage == GameStage.FIRST_A) || ((mGameStage == GameStage.SECOND_A) && (CarA.mIsInMaze != 1))) ? 1 : 0) << 6) & 0x40)
+                | ((((0 < mBeacon.CarABeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A || mGameStage == GameStage.FIRST_A) ? 1 : 0) << 5) & 0x20)
+                | ((((1 < mBeacon.CarABeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A || mGameStage == GameStage.FIRST_A) ? 1 : 0) << 4) & 0x10)
+                | ((((2 < mBeacon.CarABeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A || mGameStage == GameStage.FIRST_A) ? 1 : 0) << 3) & 0x08)
+                | ((((0 < mBeacon.CarBBeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A || mGameStage == GameStage.FIRST_A) ? 1 : 0) << 2) & 0x04)
+                | ((((1 < mBeacon.CarBBeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A || mGameStage == GameStage.FIRST_A) ? 1 : 0) << 1) & 0x02)
+                | (((2 < mBeacon.CarBBeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_A || mGameStage == GameStage.FIRST_A) ? 1 : 0) & 0x01));
             message[messageCnt++] = (byte)(CarA.MyScore >> 8);
             message[messageCnt++] = (byte)(CarA.MyScore);
             if (mGameStage == GameStage.SECOND_A)
@@ -967,12 +967,12 @@ namespace EDCHOST22
             message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[0]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[1]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[2]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[3]));
             message[messageCnt++] = (byte)((((byte)((int)mMineGenerator.ParkType[4]) << 6) & 0xC0) | (((byte)((int)mMineGenerator.ParkType[5]) << 4) & 0x30) | (((byte)((int)mMineGenerator.ParkType[6]) << 2) & 0x0C) | (byte)((int)mMineGenerator.ParkType[7]));
             message[messageCnt++] = (byte)(((CarB.mIsInMaze << 7) & 0x80)
-                | ((((mGameState == GameState.NORMAL) && ((mGameStage == GameStage.FIRST_B) || ((mGameStage == GameStage.SECOND_B) && (CarB.mIsInMaze != 1))) ? 1 : 0) << 6) & 0x40)
-                | ((((0 < mBeacon.CarBBeaconNum) ? 1 : 0) << 5) * ((mGameStage == GameStage.SECOND_B) ? 1 : 0) & 0x20)
-                | ((((1 < mBeacon.CarBBeaconNum) ? 1 : 0) << 4) * ((mGameStage == GameStage.SECOND_B) ? 1 : 0) & 0x10)
-                | ((((2 < mBeacon.CarBBeaconNum) ? 1 : 0) << 3) * ((mGameStage == GameStage.SECOND_B) ? 1 : 0) & 0x08)
-                | ((((0 < mBeacon.CarABeaconNum) ? 1 : 0) << 2) * ((mGameStage == GameStage.SECOND_B) ? 1 : 0) & 0x04)
-                | ((((1 < mBeacon.CarABeaconNum) ? 1 : 0) << 1) * ((mGameStage == GameStage.SECOND_B) ? 1 : 0) & 0x02)
+                | ((((mGameState == GameState.NORMAL) && (CarB.mIsInField != 0) && ((mGameStage == GameStage.FIRST_B) || ((mGameStage == GameStage.SECOND_B) && (CarB.mIsInMaze != 1))) ? 1 : 0) << 6) & 0x40)
+                | ((((0 < mBeacon.CarBBeaconNum) ? 1 : 0) << 5) * ((mGameStage == GameStage.SECOND_B || mGameStage == GameStage.FIRST_B) ? 1 : 0) & 0x20)
+                | ((((1 < mBeacon.CarBBeaconNum) ? 1 : 0) << 4) * ((mGameStage == GameStage.SECOND_B || mGameStage == GameStage.FIRST_B) ? 1 : 0) & 0x10)
+                | ((((2 < mBeacon.CarBBeaconNum) ? 1 : 0) << 3) * ((mGameStage == GameStage.SECOND_B || mGameStage == GameStage.FIRST_B) ? 1 : 0) & 0x08)
+                | ((((0 < mBeacon.CarABeaconNum) ? 1 : 0) << 2) * ((mGameStage == GameStage.SECOND_B || mGameStage == GameStage.FIRST_B) ? 1 : 0) & 0x04)
+                | ((((1 < mBeacon.CarABeaconNum) ? 1 : 0) << 1) * ((mGameStage == GameStage.SECOND_B || mGameStage == GameStage.FIRST_B) ? 1 : 0) & 0x02)
                 | (((2 < mBeacon.CarABeaconNum) ? 1 : 0) * ((mGameStage == GameStage.SECOND_B) ? 1 : 0) & 0x01));
             message[messageCnt++] = (byte)(CarB.MyScore >> 8);
             message[messageCnt++] = (byte)(CarB.MyScore);

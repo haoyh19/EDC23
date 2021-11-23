@@ -32,7 +32,7 @@ void zigbee_Init(UART_HandleTypeDef* huart);    //初始化
 void zigbeeMessageRecord(uint8_t length);							//实时记录信息，在每次中断处理完成后重新开启中断
 void zigbeeSend(int MineType);   //小车放置信标同时需要发送的消息
 
-uint16_t getGameTime(void);	                                //获取比赛时间，单位为1ms
+uint16_t getGameTime(void);	                                //获取比赛时间，单位为0.1s,范围为0-120s
 uint8_t getGameState(void);			//获取比赛状态，0为未开始，1为进行中，2为暂停，3为已结束
 uint16_t getCarTask(void);                                        //获取车辆任务状态，0为上半场，1为下半场
 uint16_t getIsMineIntensityValid(int MineNo);          //获取金矿强度是否有效 有效为1，无效为0
