@@ -308,10 +308,7 @@ namespace EDCHOST22
                 ByteFromCarArray = System.Text.Encoding.Default.GetBytes(serial2.ReadExisting());
                 if (ByteFromCarArray.Length >= 2)
                 {
-                    for (int i = 0; i < ByteFromCarArray.Length; i++)
-                    {
-                        CurrentBeaconType = (MineType)(ByteFromCarArray[0] + 2 * ByteFromCarArray[1]);
-                    }
+                    CurrentBeaconType = (MineType)(ByteFromCarArray[0] + 2 * ByteFromCarArray[1]);
                 }
 
             }
