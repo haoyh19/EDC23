@@ -283,9 +283,12 @@ namespace EDCHOST22
             {
                 serial1.Write(Message, 0, 48);
                 ByteFromCarArray = System.Text.Encoding.Default.GetBytes(serial1.ReadExisting());
-                if (ByteFromCarArray.Length >= 2)
+                if (ByteFromCarArray != null)
                 {
-                    CurrentBeaconType = (MineType)(ByteFromCarArray[0] + 2 * ByteFromCarArray[1]);
+                    for (int i = 0; i < ByteFromCarArray.Length; i++)
+                    {
+                        CurrentBeaconType = (MineType)ByteFromCarArray[i];
+                    }
                 }
             }
             ShowMessage(Message);
@@ -306,11 +309,13 @@ namespace EDCHOST22
             {
                 serial2.Write(Message, 0, 48);
                 ByteFromCarArray = System.Text.Encoding.Default.GetBytes(serial2.ReadExisting());
-                if (ByteFromCarArray.Length >= 2)
+                if (ByteFromCarArray != null)
                 {
-                    CurrentBeaconType = (MineType)(ByteFromCarArray[0] + 2 * ByteFromCarArray[1]);
+                    for (int i = 0; i < ByteFromCarArray.Length; i++)
+                    {
+                        CurrentBeaconType = (MineType)ByteFromCarArray[i];
+                    }
                 }
-
             }
             ShowMessage(Message);
             validPorts = SerialPort.GetPortNames();
